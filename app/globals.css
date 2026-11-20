@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-950: #061224;
+  --color-navy-900: #0b1f3a;
+  --color-navy-800: #12294b;
+  --color-navy-700: #1b3a66;
+  --color-navy-600: #264d84;
+  --color-gold-300: #e6cf8f;
+  --color-gold-400: #d8b866;
+  --color-gold-500: #c9a54c;
+  --color-gold-600: #a8863a;
+  --font-sans: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-slate-50 text-slate-800 antialiased; }
+
+@utility container-x {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility btn-gold {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-60 bg-gold-500 text-navy-950 hover:bg-gold-400 shadow-sm;
+}
+
+@utility btn-navy {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-60 bg-navy-900 text-white hover:bg-navy-800;
+}
+
+@utility btn-outline {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-60 border border-slate-300 bg-white text-navy-900 hover:border-navy-700 hover:bg-slate-50;
+}
+
+@utility btn-ghost-light {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 disabled:cursor-not-allowed disabled:opacity-60 border border-white/30 text-white hover:bg-white/10;
+}
+
+@utility card {
+  @apply rounded-2xl border border-slate-200 bg-white shadow-sm;
+}
+
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-slate-700;
+}
+
+@utility input {
+  @apply block w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-navy-600 focus:outline-none focus:ring-2 focus:ring-navy-600/15 disabled:bg-slate-100 disabled:text-slate-500;
+}
+
+@utility field-error {
+  @apply mt-1 text-xs text-red-600;
+}
+
+@utility ltr-num {
+  direction: ltr;
+  unicode-bidi: plaintext;
+}
