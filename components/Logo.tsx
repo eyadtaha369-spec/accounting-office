@@ -8,7 +8,7 @@ export default function Logo({ name, tag, light = false }: { name: string; tag?:
           <path d="M4 20h16M6 20V10M10 20V10M14 20V10M18 20V10M3 10l9-6 9 6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <span className="leading-tight">
+      <span className="min-w-0 leading-tight">
         <span className={`block text-sm font-bold sm:text-base ${light ? "text-white" : "text-navy-900"}`}>{name}</span>
         {tag && <span className={`hidden text-xs sm:block ${light ? "text-gold-300" : "text-slate-500"}`}>{tag}</span>}
       </span>

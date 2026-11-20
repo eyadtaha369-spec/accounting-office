@@ -57,7 +57,7 @@ export default function RegisterForm({ t }: { t: Dict }) {
       ]);
       // 2) إنشاء الحساب
       const input = Object.fromEntries(
-        ["full_name", "phone", "phone_alt", "email", "password", "national_id", "tax_registration_number", "client_type", "company_name", "tax_office"].map((k) => [k, String(fd.get(k) ?? "")])
+        ["full_name", "phone", "phone_alt", "email", "password", "national_id", "tax_registration_number", "client_type", "company_name", "tax_office", "address"].map((k) => [k, String(fd.get(k) ?? "")])
       ) as unknown as RegisterInput;
       input.consent = Boolean(fd.get("consent"));
       const res = await register(input, tk.ticket, front, back);
@@ -184,12 +184,16 @@ export default function RegisterForm({ t }: { t: Dict }) {
               <label className="label">{t.auth.taxOffice}<Opt /></label>
               <input name="tax_office" className="input" />
             </div>
+            <div className="sm:col-span-2">
+              <label className="label">{t.auth.address}<Opt /></label>
+              <input name="address" className="input" />
+            </div>
           </div>
         </fieldset>
 
         <div>
           <label className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-            <input type="checkbox" name="consent" className="mt-1 h-4 w-4 accent-[#0b1f3a]" />
+            <input type="checkbox" name="consent" className="mt-1 h-4 w-4 accent-[#14243b]" />
             {t.auth.consent}
           </label>
           <Err k="consent" />

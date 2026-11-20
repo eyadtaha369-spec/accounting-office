@@ -101,6 +101,7 @@ export async function adminCreateClient(input: ClientFields, ids: IdUpload) {
   const user = await insert("Users", {
     ...rest,
     role: "client",
+    file_status: "active",
     password_hash: hashPassword(password),
     id_front_file: files.front,
     id_back_file: files.back,

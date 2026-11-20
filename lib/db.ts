@@ -17,6 +17,8 @@ export type Profile = {
   client_type: string;
   company_name: string;
   tax_office: string;
+  address: string;
+  file_status: string;
   created_at: string;
 };
 
@@ -112,18 +114,24 @@ export async function adminOverview() {
 }
 
 export async function clientBundle(clientId: string) {
-  const [users, requests, notes, creds] = (await batch([
+  const [users, requests, notes, creds, records, tasks, docs] = (await batch([
     { op: "select", table: "Users", where: { id: clientId } },
     { op: "select", table: "Requests", where: { client_id: clientId } },
     { op: "select", table: "Notes", where: { client_id: clientId } },
     { op: "select", table: "Credentials", where: { client_id: clientId } },
-  ])) as [Row[], Request[], NoteRow[], Row[]];
+    { op: "select", table: "ServiceRecords", where: { client_id: clientId } },
+    { op: "select", table: "Tasks", where: { client_id: clientId } },
+    { op: "select", table: "Documents", where: { client_id: clientId } },
+  ])) as [Row[], Request[], NoteRow[], Row[], Row[], Row[], Row[]];
   if (!users[0]) return null;
   return {
     client: toProfile(users[0]),
     requests: requests.sort(byDateDesc),
     notes: notes.sort(byDateDesc),
     savedPortals: new Set(creds.filter((c) => c.username_enc || c.password_enc).map((c) => c.portal)),
+    records: records.sort((a, b) => (a.due_date || "9999").localeCompare(b.due_date || "9999")),
+    tasks: tasks.sort((a, b) => (a.status === b.status ? (a.due_date || "9999").localeCompare(b.due_date || "9999") : a.status === "done" ? 1 : -1)),
+    docs: docs.sort((a, b) => b.created_at.localeCompare(a.created_at)),
   };
 }
 

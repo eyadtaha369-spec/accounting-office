@@ -1,20 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy-950: #061224;
-  --color-navy-900: #0b1f3a;
-  --color-navy-800: #12294b;
-  --color-navy-700: #1b3a66;
-  --color-navy-600: #264d84;
-  --color-gold-300: #e6cf8f;
-  --color-gold-400: #d8b866;
-  --color-gold-500: #c9a54c;
-  --color-gold-600: #a8863a;
+  --color-navy-950: #0d1828;
+  --color-navy-900: #14243b;
+  --color-navy-800: #203957;
+  --color-navy-700: #2b4a70;
+  --color-navy-600: #3a5d89;
+  --color-gold-300: #e6d3a3;
+  --color-gold-400: #d6b878;
+  --color-gold-500: #c7a45b;
+  --color-gold-600: #a8873f;
+  --color-page: #f3f5f8;
   --font-sans: "IBM Plex Sans Arabic", "Inter", system-ui, sans-serif;
 }
 
 html { scroll-behavior: smooth; }
-body { @apply bg-slate-50 text-slate-800 antialiased; }
+body { @apply bg-page text-slate-800 antialiased; }
 
 @utility container-x {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;

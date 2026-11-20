@@ -58,6 +58,7 @@ export async function register(input: RegisterInput, ticket: string, front: Uplo
   const user = await insert("Users", {
     ...rest,
     role: "client",
+    file_status: "onboarding",
     password_hash: hashPassword(password),
     id_front_file: front.fileId,
     id_back_file: back.fileId,

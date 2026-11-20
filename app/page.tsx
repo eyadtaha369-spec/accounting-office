@@ -6,7 +6,7 @@ import { getDict } from "@/lib/locale";
 import { getSession } from "@/lib/auth";
 
 const whyIcons = ["lock", "clock", "badge", "pulse"] as const;
-const serviceIcons = ["building", "receipt", "chip", "search", "book", "shield"] as const;
+const serviceIcons = ["percent", "landmark", "users", "receipt", "search", "building", "bulb"] as const;
 
 export default async function Home() {
   const { t, locale } = await getDict();
@@ -85,10 +85,10 @@ export default async function Home() {
       </section>
 
       {/* Services */}
-      <section id="services" className="scroll-mt-16 bg-slate-50 py-20">
+      <section id="services" className="scroll-mt-16 bg-page py-20">
         <div className="container-x">
           <SectionHead title={t.services.title} subtitle={t.services.subtitle} />
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {t.services.items.map((s, i) => (
               <div key={s.title} className="card group relative overflow-hidden p-7">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold-500 to-gold-300 opacity-0 transition group-hover:opacity-100" />
@@ -132,7 +132,7 @@ export default async function Home() {
       </section>
 
       {/* CTA */}
-      <section className="bg-slate-50 pb-20">
+      <section className="bg-page pb-20">
         <div className="container-x">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-navy-900 to-navy-700 px-6 py-12 text-center text-white sm:px-12">
             <div className="pointer-events-none absolute -bottom-24 start-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gold-500/20 blur-3xl" />

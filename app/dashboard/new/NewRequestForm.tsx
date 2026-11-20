@@ -55,7 +55,7 @@ export default function NewRequestForm({ t, initialType }: { t: Dict; initialTyp
                 type === rt ? "border-navy-700 bg-navy-900/[0.04] ring-1 ring-navy-700" : "border-slate-200 hover:border-slate-300"
               }`}
             >
-              <input type="radio" name="type" value={rt} checked={type === rt} onChange={() => setType(rt)} className="mt-0.5 accent-[#0b1f3a]" />
+              <input type="radio" name="type" value={rt} checked={type === rt} onChange={() => setType(rt)} className="mt-0.5 accent-[#14243b]" />
               <span className="font-medium text-slate-800">{t.requestTypes[rt]}</span>
             </label>
           ))}

@@ -6,6 +6,11 @@ import PortalCard from "./PortalCard";
 import NoteForm from "./NoteForm";
 import AddRequestForm from "./AddRequestForm";
 import ResetPassword from "./ResetPassword";
+import EditClient from "./EditClient";
+import RecordsPanel, { type RecordView } from "@/components/ops/RecordsPanel";
+import TasksPanel, { type TaskView } from "@/components/ops/TasksPanel";
+import DocsPanel, { type DocView } from "@/components/ops/DocsPanel";
+import { Panel, Pill } from "@/components/ops/Panel";
 import { requireStaff } from "@/lib/auth";
 import { clientBundle } from "@/lib/db";
 import { downloadTicket } from "@/lib/tickets";
@@ -25,6 +30,13 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
   const savedPortals = isAdmin ? b.savedPortals : new Set<string>();
   const url = process.env.APPS_SCRIPT_URL!;
 
+  const name = c.full_name;
+  const records = b.records.map((r) => ({ ...r, clientName: name })) as unknown as RecordView[];
+  const tasks = b.tasks.map((r) => ({ ...r, clientName: name })) as unknown as TaskView[];
+  const docs = b.docs.map((d) => ({ ...d, clientName: name, ticket: downloadTicket(d.drive_file_id) })) as unknown as DocView[];
+  const fs = c.file_status || "active";
+  const fsTone: Record<string, string> = { onboarding: "bg-amber-50 text-amber-800 ring-amber-200", active: "bg-emerald-50 text-emerald-800 ring-emerald-200", suspended: "bg-orange-50 text-orange-800 ring-orange-200", closed: "bg-slate-100 text-slate-600 ring-slate-200" };
+
   const fields: [string, string | null, boolean?][] = [
     [t.auth.fullName, c.full_name],
     [t.auth.email, c.email, true],
@@ -35,6 +47,7 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
     [t.auth.clientType, t.clientTypes[c.client_type as keyof typeof t.clientTypes]],
     [t.auth.companyName, c.company_name],
     [t.auth.taxOffice, c.tax_office],
+    [t.auth.address, c.address],
     [t.dash.date, fmtDate(c.created_at, locale)],
   ];
 
@@ -46,7 +59,10 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
         <div className="grid h-14 w-14 place-items-center rounded-2xl bg-navy-900 text-xl font-bold text-gold-400">{c.full_name.trim().charAt(0)}</div>
         <div>
           <h1 className="text-2xl font-bold text-navy-900">{c.full_name}</h1>
-          <p className="text-sm text-slate-500">{t.admin.clientFile}</p>
+          <div className="mt-1 flex items-center gap-2">
+            <p className="text-sm text-slate-500">{t.admin.clientFile}</p>
+            <Pill className={fsTone[fs] ?? fsTone.active}>{t.fileStatus[fs as keyof typeof t.fileStatus] ?? fs}</Pill>
+          </div>
         </div>
       </div>
 
@@ -73,6 +89,9 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
             </a>
           )}
           <div className="mt-5 border-t border-slate-100 pt-5">
+            <EditClient t={t} client={c} />
+          </div>
+          <div className="mt-3">
             <ResetPassword t={t} clientId={c.id} name={c.full_name} phone={c.phone} email={c.email} />
           </div>
         </section>
@@ -116,6 +135,19 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
         </div>
         <RequestsTable rows={b.requests} t={t} locale={locale} showClient={false} showCompleted empty={t.dash.noRequests} />
       </section>
+
+      <Panel title={t.ops.clientRecords}>
+        <RecordsPanel t={t} locale={locale} rows={records} clients={[]} lockedClientId={c.id} />
+      </Panel>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel title={t.ops.clientTasks}>
+          <TasksPanel t={t} locale={locale} rows={tasks} clients={[]} lockedClientId={c.id} />
+        </Panel>
+        <Panel title={t.ops.clientDocs}>
+          <DocsPanel t={t} locale={locale} rows={docs} clients={[]} url={url} lockedClientId={c.id} />
+        </Panel>
+      </div>
 
       {/* Internal notes */}
       <section className="card p-5 sm:p-6">

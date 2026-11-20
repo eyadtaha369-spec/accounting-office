@@ -10,7 +10,7 @@ const hmac = (msg: string) => createHmac("sha256", secret()).update(msg, "utf8")
 
 export type UploadTicket = {
   t: "up";
-  folder: "ids" | "requests";
+  folder: "ids" | "requests" | "docs";
   prefix: string;
   uid: string;          // صاحب التذكرة (أو "pending" أثناء التسجيل)
   requestId?: string;

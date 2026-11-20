@@ -46,6 +46,7 @@ export async function updateProfile(input: Record<string, string>) {
     client_type,
     company_name: String(input.company_name ?? "").trim().slice(0, 200),
     tax_office: String(input.tax_office ?? "").trim().slice(0, 150),
+    address: String(input.address ?? "").trim().slice(0, 300),
   });
   revalidatePath("/dashboard/profile");
   return { ok: true };

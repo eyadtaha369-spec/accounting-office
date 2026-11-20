@@ -1,5 +1,5 @@
 /**
- * مكتب المحاسبة — الخادم الخلفي على Google Sheets + Google Drive
+ * مكتب محمد عبدالعال محمد للمحاسبة والمراجعة — الخادم الخلفي (Google Sheets + Google Drive)
  * ---------------------------------------------------------------
  * 1) افتح Google Sheet جديد ← Extensions ← Apps Script ← الصق هذا الملف بالكامل.
  * 2) من القائمة اختر الدالة setup واضغط Run (ووافق على الصلاحيات).
@@ -15,7 +15,7 @@
 const TABLES = {
   Users: ['id', 'role', 'full_name', 'email', 'password_hash', 'phone', 'phone_alt', 'national_id',
           'id_front_file', 'id_back_file', 'tax_registration_number', 'client_type', 'company_name',
-          'tax_office', 'created_at', 'updated_at'],
+          'tax_office', 'created_at', 'updated_at', 'address', 'file_status'],
   Requests: ['id', 'reference_no', 'client_id', 'request_type', 'sub_type', 'description', 'status',
              'admin_message', 'assigned_to', 'completed_at', 'created_at', 'updated_at'],
   Files: ['id', 'request_id', 'client_id', 'uploaded_by', 'kind', 'drive_file_id', 'file_name',
@@ -24,6 +24,14 @@ const TABLES = {
   Notes: ['id', 'client_id', 'body', 'author_id', 'author_name', 'created_at'],
   Credentials: ['id', 'client_id', 'portal', 'username_enc', 'password_enc', 'updated_by', 'updated_at'],
   Meta: ['id', 'value'],
+  ServiceRecords: ['id', 'client_id', 'service', 'period', 'due_date', 'status', 'amount', 'reference',
+                   'notes', 'created_by', 'created_at', 'updated_at'],
+  Tasks: ['id', 'title', 'client_id', 'due_date', 'priority', 'status', 'assigned_to', 'notes',
+          'created_by', 'created_at', 'updated_at'],
+  Finance: ['id', 'type', 'category', 'amount', 'date', 'client_id', 'description', 'method',
+            'created_by', 'created_at', 'updated_at'],
+  Documents: ['id', 'client_id', 'title', 'category', 'drive_file_id', 'file_name', 'mime_type',
+              'size_bytes', 'visible_to_client', 'uploaded_by', 'created_at'],
 };
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -31,15 +39,7 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 // ======================= الإعداد لمرة واحدة =======================
 function setup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  Object.keys(TABLES).forEach(function (name) {
-    let sh = ss.getSheetByName(name);
-    if (!sh) sh = ss.insertSheet(name);
-    const headers = TABLES[name];
-    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#0b1f3a').setFontColor('#ffffff');
-    sh.setFrozenRows(1);
-    // كل الأعمدة نص (حتى لا تُحذف الأصفار من أرقام الهاتف والرقم القومي)
-    sh.getRange(1, 1, sh.getMaxRows(), headers.length).setNumberFormat('@');
-  });
+  Object.keys(TABLES).forEach(function (name) { ensureSheet(name); });
   const def = ss.getSheetByName('Sheet1') || ss.getSheetByName('ورقة1');
   if (def && ss.getSheets().length > 1) ss.deleteSheet(def);
 
@@ -49,6 +49,9 @@ function setup() {
     props.setProperty('ROOT_FOLDER', root.getId());
     props.setProperty('IDS_FOLDER', root.createFolder('National IDs').getId());
     props.setProperty('REQ_FOLDER', root.createFolder('Request Files').getId());
+  }
+  if (!props.getProperty('DOCS_FOLDER')) {
+    props.setProperty('DOCS_FOLDER', DriveApp.getFolderById(props.getProperty('ROOT_FOLDER')).createFolder('Documents Archive').getId());
   }
   if (!props.getProperty('API_SECRET')) {
     props.setProperty('API_SECRET', Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, ''));
@@ -94,6 +97,7 @@ function runBatch(ops) {
         case 'insert': delete cache[o.table]; return insert(o.table, o.row);
         case 'update': delete cache[o.table]; return update(o.table, o.id, o.patch);
         case 'upsert': delete cache[o.table]; return upsert(o.table, o.row);
+        case 'delete': delete cache[o.table]; return remove(o.table, o.id);
         default: throw new Error('unknown op ' + o.op);
       }
     });
@@ -102,8 +106,26 @@ function runBatch(ops) {
   }
 }
 
+const _ensured = {};
 function sheet(table) {
+  if (!_ensured[table]) { ensureSheet(table); _ensured[table] = true; }
   return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(table);
+}
+
+/** ينشئ الورقة إن لم توجد ويضيف أي أعمدة جديدة في آخرها (ترقية تلقائية بدون فقد بيانات) */
+function ensureSheet(table) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const headers = TABLES[table];
+  let sh = ss.getSheetByName(table);
+  if (!sh) sh = ss.insertSheet(table);
+  const current = sh.getLastColumn() > 0 ? sh.getRange(1, 1, 1, sh.getLastColumn()).getDisplayValues()[0] : [];
+  if (current.join('|') !== headers.join('|')) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#14243b').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+    // كل الأعمدة نص (حتى لا تُحذف الأصفار من أرقام الهاتف والرقم القومي)
+    sh.getRange(1, 1, sh.getMaxRows(), headers.length).setNumberFormat('@');
+  }
+  return sh;
 }
 
 function readAll(cache, table) {
@@ -175,6 +197,13 @@ function update(table, id, patch) {
   return obj;
 }
 
+function remove(table, id) {
+  const idx = findRowIndex(table, id);
+  if (idx === -1) return { deleted: false };
+  sheet(table).deleteRow(idx);
+  return { deleted: true };
+}
+
 function upsert(table, row) {
   return findRowIndex(table, row.id) === -1 ? insert(table, row) : update(table, row.id, row);
 }
@@ -206,7 +235,10 @@ function directUpload(body) {
   if (!bytes.length || bytes.length > MAX_UPLOAD_BYTES) throw new Error('bad_size');
   const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
   if (allowed.indexOf(body.mimeType) === -1) throw new Error('bad_type');
-  const folderId = prop(t.payload.folder === 'ids' ? 'IDS_FOLDER' : 'REQ_FOLDER');
+  const folderKey = { ids: 'IDS_FOLDER', requests: 'REQ_FOLDER', docs: 'DOCS_FOLDER' }[t.payload.folder];
+  if (!folderKey) throw new Error('invalid_ticket');
+  let folderId = prop(folderKey);
+  if (!folderId) { setup(); folderId = prop(folderKey); }
   const name = String(t.payload.prefix || 'file') + '__' + String(body.name || 'file').slice(0, 120);
   const file = DriveApp.getFolderById(folderId).createFile(Utilities.newBlob(bytes, body.mimeType, name));
   return { fileId: file.getId(), receipt: hmacHex(file.getId() + '|' + t.raw) };

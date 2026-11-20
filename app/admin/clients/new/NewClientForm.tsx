@@ -10,7 +10,7 @@ import type { ClientFields } from "@/lib/client-input";
 import CredentialsCard from "@/components/CredentialsCard";
 
 type Errors = Partial<Record<string, string>>;
-const FIELDS = ["full_name", "phone", "phone_alt", "email", "password", "national_id", "tax_registration_number", "client_type", "company_name", "tax_office"] as const;
+const FIELDS = ["full_name", "phone", "phone_alt", "email", "password", "national_id", "tax_registration_number", "client_type", "company_name", "tax_office", "address"] as const;
 
 export default function NewClientForm({ t }: { t: Dict }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -183,6 +183,10 @@ export default function NewClientForm({ t }: { t: Dict }) {
           <div>
             <label className="label">{t.auth.taxOffice}<Opt /></label>
             <input name="tax_office" className="input" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label">{t.auth.address}<Opt /></label>
+            <input name="address" className="input" />
           </div>
         </div>
       </fieldset>

@@ -3,7 +3,7 @@ import { CLIENT_TYPES } from "./i18n";
 import { normalizeDigits, re } from "./validation";
 
 export type ClientFields = Record<
-  "full_name" | "phone" | "phone_alt" | "email" | "password" | "national_id" | "tax_registration_number" | "client_type" | "company_name" | "tax_office",
+  "full_name" | "phone" | "phone_alt" | "email" | "password" | "national_id" | "tax_registration_number" | "client_type" | "company_name" | "tax_office" | "address",
   string
 >;
 
@@ -20,6 +20,7 @@ export function cleanClient(input: Partial<ClientFields>) {
     client_type: String(input.client_type ?? ""),
     company_name: String(input.company_name ?? "").trim().slice(0, 200),
     tax_office: String(input.tax_office ?? "").trim().slice(0, 150),
+    address: String(input.address ?? "").trim().slice(0, 300),
   };
   let error: { error: string; field?: string } | null = null;
   if (!d.full_name) error = { error: "required", field: "full_name" };

@@ -1,12 +1,13 @@
 import "server-only";
 
 export type Row = Record<string, string>;
-export type Table = "Users" | "Requests" | "Files" | "StatusHistory" | "Notes" | "Credentials";
+export type Table = "Users" | "Requests" | "Files" | "StatusHistory" | "Notes" | "Credentials" | "ServiceRecords" | "Tasks" | "Finance" | "Documents";
 export type Op =
   | { op: "select"; table: Table; where?: Record<string, string | string[]> }
   | { op: "insert"; table: Table; row: Row }
   | { op: "update"; table: Table; id: string; patch: Row }
-  | { op: "upsert"; table: Table; row: Row };
+  | { op: "upsert"; table: Table; row: Row }
+  | { op: "delete"; table: Table; id: string };
 
 /** ينفّذ مجموعة عمليات في طلب واحد إلى Apps Script */
 export async function batch(ops: Op[]): Promise<unknown[]> {
@@ -38,4 +39,7 @@ export async function insert(table: Table, row: Row) {
 }
 export async function update(table: Table, id: string, patch: Row) {
   return (await batch([{ op: "update", table, id, patch }]))[0] as Row;
+}
+export async function remove(table: Table, id: string) {
+  return (await batch([{ op: "delete", table, id }]))[0] as { deleted: boolean };
 }

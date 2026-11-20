@@ -32,6 +32,7 @@ export default function ProfileForm({ t, profile }: { t: Dict; profile: Profile 
         client_type: String(fd.get("client_type")),
         company_name: String(fd.get("company_name") ?? ""),
         tax_office: String(fd.get("tax_office") ?? ""),
+        address: String(fd.get("address") ?? ""),
       });
       error = "error" in res;
     } catch {
@@ -68,6 +69,9 @@ export default function ProfileForm({ t, profile }: { t: Dict; profile: Profile 
         </div>
         <Field label={t.auth.companyName} name="company_name" def={profile.company_name} />
         <Field label={t.auth.taxOffice} name="tax_office" def={profile.tax_office} />
+        <div className="sm:col-span-2">
+          <Field label={t.auth.address} name="address" def={profile.address} />
+        </div>
       </div>
       {msg && <p className={`rounded-lg p-3 text-sm ${msg.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>{msg.text}</p>}
       <button disabled={loading} className="btn-navy">{loading ? t.common.loading : t.dash.save}</button>
