@@ -4,6 +4,8 @@ import RequestsTable from "@/components/RequestsTable";
 import DriveImage from "@/components/DriveImage";
 import PortalCard from "./PortalCard";
 import NoteForm from "./NoteForm";
+import AddRequestForm from "./AddRequestForm";
+import ResetPassword from "./ResetPassword";
 import { requireStaff } from "@/lib/auth";
 import { clientBundle } from "@/lib/db";
 import { downloadTicket } from "@/lib/tickets";
@@ -70,6 +72,9 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
               WhatsApp
             </a>
           )}
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <ResetPassword t={t} clientId={c.id} name={c.full_name} phone={c.phone} email={c.email} />
+          </div>
         </section>
 
         {/* ID card */}
@@ -105,8 +110,9 @@ export default async function ClientFile({ params }: { params: Promise<{ id: str
 
       {/* History */}
       <section className="card overflow-hidden">
-        <div className="border-b border-slate-200 px-5 py-4">
+        <div className="space-y-4 border-b border-slate-200 px-5 py-4">
           <h2 className="font-bold text-navy-900">{t.admin.history}</h2>
+          <AddRequestForm t={t} clientId={c.id} />
         </div>
         <RequestsTable rows={b.requests} t={t} locale={locale} showClient={false} showCompleted empty={t.dash.noRequests} />
       </section>

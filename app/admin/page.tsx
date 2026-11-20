@@ -1,3 +1,4 @@
+import Link from "next/link";
 import RequestsTable from "@/components/RequestsTable";
 import AutoRefresh from "@/components/AutoRefresh";
 import { Icon } from "@/components/Icons";
@@ -22,7 +23,10 @@ export default async function AdminHome() {
   return (
     <div className="space-y-6">
       <AutoRefresh seconds={45} />
-      <h1 className="text-2xl font-bold text-navy-900">{t.admin.title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-navy-900">{t.admin.title}</h1>
+        <Link href="/admin/clients/new" className="btn-gold">+ {t.admin.addClient}</Link>
+      </div>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className="card flex items-center gap-4 p-4 sm:p-5">

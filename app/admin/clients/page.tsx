@@ -27,7 +27,10 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-navy-900">{t.admin.clients}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-navy-900">{t.admin.clients}</h1>
+        <Link href="/admin/clients/new" className="btn-gold">+ {t.admin.addClient}</Link>
+      </div>
       <form className="flex gap-2" action="/admin/clients">
         <div className="relative flex-1">
           <Icon name="search" className="pointer-events-none absolute start-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />

@@ -1,13 +1,13 @@
 "use server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { LOCALE_COOKIE, CLIENT_TYPES } from "@/lib/i18n";
+import { LOCALE_COOKIE } from "@/lib/i18n";
+import { cleanClient, type ClientFields } from "@/lib/client-input";
 import { createSession, destroySession } from "@/lib/session";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { batch, insert, type Row } from "@/lib/sheets";
 import { getUserRowByEmail } from "@/lib/db";
 import { readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
-import { normalizeDigits, re } from "@/lib/validation";
 import type { Uploaded } from "@/lib/direct";
 
 export async function setLocale(locale: "ar" | "en") {
@@ -35,34 +35,12 @@ export async function getRegisterTicket() {
   return { url: process.env.APPS_SCRIPT_URL!, ticket: uploadTicket({ folder: "ids", prefix, uid: "pending" }) };
 }
 
-export type RegisterInput = Record<
-  "full_name" | "phone" | "phone_alt" | "email" | "password" | "national_id" | "tax_registration_number" | "client_type" | "company_name" | "tax_office",
-  string
-> & { consent: boolean };
+export type RegisterInput = ClientFields & { consent: boolean };
 
 export async function register(input: RegisterInput, ticket: string, front: Uploaded, back: Uploaded) {
-  const d = {
-    full_name: String(input.full_name ?? "").trim().slice(0, 150),
-    phone: normalizeDigits(String(input.phone ?? "")),
-    phone_alt: normalizeDigits(String(input.phone_alt ?? "")),
-    email: String(input.email ?? "").trim().toLowerCase(),
-    password: String(input.password ?? ""),
-    national_id: normalizeDigits(String(input.national_id ?? "")),
-    tax_registration_number: normalizeDigits(String(input.tax_registration_number ?? "")),
-    client_type: String(input.client_type ?? ""),
-    company_name: String(input.company_name ?? "").trim().slice(0, 200),
-    tax_office: String(input.tax_office ?? "").trim().slice(0, 150),
-  };
-  // التحقق في الخادم
   if (!input.consent) return { error: "consent", field: "consent" };
-  if (!d.full_name) return { error: "required", field: "full_name" };
-  if (!re.phone.test(d.phone)) return { error: "phone", field: "phone" };
-  if (d.phone_alt && !re.phone.test(d.phone_alt)) return { error: "phone", field: "phone_alt" };
-  if (!re.email.test(d.email)) return { error: "email", field: "email" };
-  if (d.password.length < 8) return { error: "password", field: "password" };
-  if (!re.nationalId.test(d.national_id)) return { error: "nationalId", field: "national_id" };
-  if (d.tax_registration_number && !re.tax.test(d.tax_registration_number)) return { error: "taxNumber", field: "tax_registration_number" };
-  if (!(CLIENT_TYPES as readonly string[]).includes(d.client_type)) return { error: "generic" };
+  const { d, error } = cleanClient(input);
+  if (error) return error;
 
   const t = readTicket<UploadTicket>(ticket);
   if (!t || t.folder !== "ids" || !verifyReceipt(ticket, front?.fileId, front?.receipt) || !verifyReceipt(ticket, back?.fileId, back?.receipt) || front.fileId === back.fileId) {
