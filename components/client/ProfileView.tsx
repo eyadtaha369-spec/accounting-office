@@ -1,5 +1,5 @@
 "use client";
-import ProfileForm from "./ProfileForm";
+import ClientHeader from "./ClientHeader";
 import PoaNotice from "@/components/portal/PoaNotice";
 import FileList from "@/components/FileList";
 import { useClient } from "@/components/store/stores";
@@ -21,7 +21,6 @@ export default function ProfileView() {
   const { t } = useI18n();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold text-navy-900">{t.dash.profile}</h1>
       <Guard s={s}>
         {(d) => {
           if (!d.Me) return null;
@@ -29,6 +28,7 @@ export default function ProfileView() {
           const files = [...d.Documents].sort(desc()).map((x) => ({ id: x.id, file_name: x.title || x.file_name, ticket: s.ticket(x.drive_file_id) }));
           return (
             <>
+              <ClientHeader me={d.Me} full />
               <div className="card flex flex-wrap items-center justify-between gap-3 p-5">
                 <span className="text-sm font-medium text-slate-600">{t.ops.fileStatus}</span>
                 <span className={`rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset ${tone[fs] ?? tone.active}`}>{t.fileStatus[fs as keyof typeof t.fileStatus] ?? fs}</span>
@@ -48,7 +48,6 @@ export default function ProfileView() {
                   <PoaNotice />
                 )}
               </div>
-              <ProfileForm key={d.Me.updated_at} t={t} profile={d.Me} />
               <div className="card p-5 sm:p-6">
                 <h2 className="mb-4 font-bold text-navy-900">{t.ops.myDocuments}</h2>
                 <FileList files={files} url={s.url} downloadLabel={t.dash.download} />

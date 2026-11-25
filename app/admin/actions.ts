@@ -1,4 +1,5 @@
 "use server";
+import { serializeServices } from "@/lib/services";
 import { requireAdmin, requireStaff } from "@/lib/auth";
 import { decrypt, encrypt } from "@/lib/crypto";
 import { batch, insert, select, type Row } from "@/lib/sheets";
@@ -79,7 +80,7 @@ function checkIdUpload(s: { uid: string }, ids: IdUpload) {
 }
 
 /** إنشاء حساب عميل مفعّل فوراً — لا يؤثر على جلسة الأدمن */
-export async function adminCreateClient(input: ClientFields, ids: IdUpload) {
+export async function adminCreateClient(input: ClientFields & { services?: string[] }, ids: IdUpload) {
   const s = await requireStaff();
   const { d, error } = cleanClient(input);
   if (error) return error;
@@ -99,7 +100,7 @@ export async function adminCreateClient(input: ClientFields, ids: IdUpload) {
     {
       op: "insert",
       table: "Users",
-      row: { ...rest, id, role: "client", file_status: "active", password_hash: hashPassword(password), id_front_file: files.front, id_back_file: files.back },
+      row: { ...rest, id, role: "client", file_status: "active", services: serializeServices(input.services ?? []), password_hash: hashPassword(password), id_front_file: files.front, id_back_file: files.back },
     },
     { op: "insert", table: "Notes", row: { client_id: id, body: "تم إنشاء الحساب بواسطة المكتب", author_id: s.uid, author_name: s.name } },
   ])) as [Row, Row];

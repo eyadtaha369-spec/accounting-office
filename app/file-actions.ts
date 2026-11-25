@@ -12,7 +12,7 @@ export async function getRequestUploadTicket(requestId: string) {
   const [req] = (await select("Requests", { id: requestId })) as unknown as Request[];
   if (!req) throw new Error("not_found");
   const isStaff = s.role !== "client";
-  if (!isStaff && req.client_id !== s.uid) throw new Error("forbidden");
+  if (!isStaff) throw new Error("read_only"); // العميل لا يرفع ملفات
   return {
     url: process.env.APPS_SCRIPT_URL!,
     ticket: uploadTicket({
@@ -29,6 +29,7 @@ export async function getRequestUploadTicket(requestId: string) {
 /** تسجيل الملفات بعد رفعها — يتحقق أن Apps Script هو من أنشأها بنفس التذكرة */
 export async function registerUploads(ticket: string, uploads: Uploaded[]) {
   const s = await requireLogin();
+  if (s.role === "client") throw new Error("read_only");
   const t = readTicket<UploadTicket>(ticket);
   if (!t || t.folder !== "requests" || t.uid !== s.uid || !t.requestId || !t.clientId || !t.kind) throw new Error("invalid_ticket");
   const ops: Op[] = [];
@@ -59,6 +60,7 @@ export async function registerUploads(ticket: string, uploads: Uploaded[]) {
 /** العميل يعيد إرسال الطلب بعد رفع المستندات المطلوبة */
 export async function resubmitRequest(requestId: string) {
   const s = await requireLogin();
+  if (s.role === "client") return { ok: false as const };
   const [req] = (await select("Requests", { id: requestId })) as unknown as Request[];
   if (!req || req.client_id !== s.uid || req.status !== "needs_documents") return { ok: false as const };
   const res = await setRequestStatus(req, "pending_review", req.admin_message, s.uid);

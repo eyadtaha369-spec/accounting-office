@@ -18,7 +18,9 @@ const money = (v: unknown) => {
 async function who() {
   const s = await getSession();
   if (!s) throw new Error("forbidden");
-  return { ...s, staff: s.role !== "client" };
+  // بوابة العميل للعرض والتحميل فقط: كل عمليات الكتابة لفريق المكتب
+  if (s.role === "client") throw new Error("read_only");
+  return { ...s, staff: true };
 }
 
 /** يحدد العميل المستهدف: العميل نفسه، أو أي عميل إذا كان المستخدم من فريق المكتب */

@@ -13,6 +13,8 @@ export type AdminData = {
   Documents: R[];
   MonthlyInvoices: R[];
   BillingLedger: R[];
+  ArchiveYears: R[];
+  ArchiveDocs: R[];
   Portals: { client_id: string; portal: string }[]; // أي البوابات لها بيانات محفوظة فقط
 };
 
@@ -24,6 +26,8 @@ export type ClientData = {
   Documents: R[];
   MonthlyInvoices: R[];
   BillingLedger: R[];
+  ArchiveYears: R[];   // الظاهرة فقط
+  ArchiveDocs: R[];    // الظاهرة فقط وفي سنوات ظاهرة وخدمات مفعلة
 };
 
 export type Snapshot<T> = {

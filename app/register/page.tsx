@@ -1,12 +1,6 @@
-import AuthShell from "@/components/AuthShell";
-import RegisterForm from "./RegisterForm";
-import { getDict } from "@/lib/locale";
+import { redirect } from "next/navigation";
 
-export default async function RegisterPage() {
-  const { t, locale } = await getDict();
-  return (
-    <AuthShell t={t} locale={locale} wide>
-      <RegisterForm t={t} />
-    </AuthShell>
-  );
+// التسجيل الذاتي مغلق — الحسابات يُنشئها المكتب من لوحة الإدارة
+export default function Page() {
+  redirect("/login");
 }

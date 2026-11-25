@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { login } from "@/app/actions";
@@ -49,8 +48,7 @@ export default function LoginForm({ t, next }: { t: Dict; next?: string }) {
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-slate-600">
-        {t.auth.noAccount}{" "}
-        <Link href="/register" className="font-semibold text-navy-700 hover:text-gold-600">{t.nav.register}</Link>
+        {t.arch.loginHint}
       </p>
     </div>
   );

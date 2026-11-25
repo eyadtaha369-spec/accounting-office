@@ -42,10 +42,10 @@ export default async function Home() {
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-8 text-white/75 sm:text-lg">{t.hero.subtitle}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/register" className="btn-gold px-6 py-3 text-base">
-                {t.hero.ctaRegister}
+              <Link href="/login" className="btn-gold px-6 py-3 text-base">
+                {t.nav.login}
               </Link>
-              <Link href="/dashboard/new?type=feasibility" className="btn-ghost-light px-6 py-3 text-base">
+              <Link href="/#contact" className="btn-ghost-light px-6 py-3 text-base">
                 {t.hero.ctaConsult}
               </Link>
             </div>
@@ -141,7 +141,7 @@ export default async function Home() {
             <div className="pointer-events-none absolute -bottom-24 start-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-gold-500/20 blur-3xl" />
             <h2 className="relative text-2xl font-bold sm:text-3xl">{t.cta.title}</h2>
             <p className="relative mx-auto mt-3 max-w-2xl text-white/75">{t.cta.body}</p>
-            <Link href="/register" className="btn-gold relative mt-7 px-8 py-3 text-base">
+            <Link href="/#contact" className="btn-gold relative mt-7 px-8 py-3 text-base">
               {t.cta.button}
             </Link>
           </div>
@@ -175,7 +175,6 @@ export default async function Home() {
             <ul className="mt-4 space-y-2 text-sm">
               <li><a href="#services" className="hover:text-gold-300">{t.nav.services}</a></li>
               <li><a href="#steps" className="hover:text-gold-300">{t.nav.steps}</a></li>
-              <li><Link href="/register" className="hover:text-gold-300">{t.nav.register}</Link></li>
               <li><Link href="/login" className="hover:text-gold-300">{t.nav.login}</Link></li>
             </ul>
           </div>

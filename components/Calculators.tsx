@@ -170,7 +170,7 @@ function FormationCalc({ t }: { t: Dict }) {
             ))}
           </ul>
           <p className="mt-4 rounded-lg bg-page p-3 text-xs leading-6 text-slate-600">{p.feesNote}</p>
-          <Link href="/dashboard/new?type=company_formation" className="btn-gold mt-3">{p.getQuote}</Link>
+          <Link href="/#contact" className="btn-gold mt-3">{p.getQuote}</Link>
         </div>
       </div>
     </div>

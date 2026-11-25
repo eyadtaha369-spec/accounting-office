@@ -18,7 +18,9 @@ const TABLES = {
           'tax_office', 'created_at', 'updated_at', 'address', 'file_status',
           // تواريخ الانتهاء + التوكيل + خزنة المستندات الدائمة (قيم الخزنة: drive:ID|اسم الملف أو url:رابط)
           'cr_expiry', 'tax_card_expiry', 'poa_has', 'poa_number', 'poa_letter_year', 'poa_office', 'poa_file',
-          'vault_tax_card', 'vault_commercial_register', 'vault_vat_certificate', 'vault_incorporation', 'vault_balance_sheet'],
+          'vault_tax_card', 'vault_commercial_register', 'vault_vat_certificate', 'vault_incorporation', 'vault_balance_sheet',
+          // الخدمات المفعلة للعميل (مفصولة بفواصل): vat,income,einvoice,payroll,insurance,financials,audit,formation
+          'services'],
   Requests: ['id', 'reference_no', 'client_id', 'request_type', 'sub_type', 'description', 'status',
              'admin_message', 'assigned_to', 'completed_at', 'created_at', 'updated_at'],
   Files: ['id', 'request_id', 'client_id', 'uploaded_by', 'kind', 'drive_file_id', 'file_name',
@@ -41,6 +43,11 @@ const TABLES = {
   // كشف حساب الأتعاب: charge = أتعاب مستحقة | payment = دفعة (إيصال تحويل)
   BillingLedger: ['id', 'client_id', 'kind', 'title', 'amount', 'date', 'status', 'method', 'receipt_file',
                   'receipt_name', 'note', 'created_by', 'created_at', 'updated_at'],
+  // الأرشيف السنوي: مجلد لكل سنة (id = clientId:year) مع حالة الإظهار للعميل
+  ArchiveYears: ['id', 'client_id', 'year', 'is_visible', 'created_at', 'updated_at'],
+  // مستندات الأرشيف: section = general أو إحدى الخدمات (vat, income, einvoice, ...)
+  ArchiveDocs: ['id', 'client_id', 'year', 'section', 'title', 'drive_file_id', 'file_name', 'mime_type', 'link',
+                'is_visible', 'uploaded_by', 'created_at', 'updated_at'],
 };
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;

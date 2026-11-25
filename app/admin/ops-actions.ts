@@ -1,4 +1,5 @@
 "use server";
+import { serializeServices } from "@/lib/services";
 import { requireAdmin, requireStaff } from "@/lib/auth";
 import { batch, insert, remove, select, update, type Row } from "@/lib/sheets";
 import { downloadTicket, readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
@@ -153,6 +154,7 @@ export async function updateClientByStaff(clientId: string, input: Row) {
         tax_office: str(input.tax_office, 150),
         address: str(input.address, 300),
         file_status: oneOf(FILE_STATUSES, input.file_status, "active"),
+        ...(input.services !== undefined ? { services: serializeServices(String(input.services).split(",")) } : {}),
       },
     },
   ])) as Row[];

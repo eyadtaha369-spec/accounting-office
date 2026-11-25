@@ -30,7 +30,12 @@ export async function login(email: string, password: string, next?: string) {
 }
 
 /** تذكرة لرفع صورتي البطاقة أثناء التسجيل (صالحة 15 دقيقة) */
-export async function getRegisterTicket() {
+export async function getRegisterTicket(): Promise<{ url: string; ticket: string }> {
+  // التسجيل الذاتي مغلق: الحسابات تُنشأ من لوحة الإدارة فقط
+  throw new Error("registration_closed");
+}
+
+async function _unusedRegisterTicket() {
   const prefix = `pending-${crypto.randomUUID()}`;
   return { url: process.env.APPS_SCRIPT_URL!, ticket: uploadTicket({ folder: "ids", prefix, uid: "pending" }) };
 }
@@ -38,6 +43,11 @@ export async function getRegisterTicket() {
 export type RegisterInput = ClientFields & { consent: boolean };
 
 export async function register(input: RegisterInput, ticket: string, front: Uploaded, back: Uploaded) {
+  void input; void ticket; void front; void back;
+  return { error: "closed" as const, field: undefined as string | undefined };
+}
+
+async function _unusedRegister(input: RegisterInput, ticket: string, front: Uploaded, back: Uploaded) {
   if (!input.consent) return { error: "consent", field: "consent" };
   const { d, error } = cleanClient(input);
   if (error) return error;

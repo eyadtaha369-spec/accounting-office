@@ -26,6 +26,11 @@ export default function CredentialsCard({ t, name, phone, email, password }: { t
         <a href={whatsappLink(phone, text)} target="_blank" rel="noopener noreferrer" className="btn bg-emerald-600 text-white hover:bg-emerald-700">
           {t.portal.wa.sendCreds}
         </a>
+        {email && (
+          <a href={`mailto:${email}?subject=${encodeURIComponent(t.arch.emailSubject)}&body=${encodeURIComponent(text)}`} className="btn-outline">
+            ✉ {t.arch.sendEmail}
+          </a>
+        )}
       </div>
     </div>
   );

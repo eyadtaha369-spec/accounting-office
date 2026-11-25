@@ -8,6 +8,8 @@ import { uploadDirect } from "@/lib/direct";
 import { adminCreateClient, getAdminIdTicket } from "@/app/admin/actions";
 import type { ClientFields } from "@/lib/client-input";
 import CredentialsCard from "@/components/CredentialsCard";
+import ServiceChecks from "./ServiceChecks";
+import { serializeServices } from "@/lib/services";
 import { useAdmin } from "@/components/store/stores";
 import { nowIso, replaceById, tmpId } from "@/lib/view";
 
@@ -40,6 +42,7 @@ export default function NewClientForm({ t }: { t: Dict }) {
     return e;
   }
 
+  const [services, setServices] = useState<string[]>([]);
   async function onSubmit(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     setFormError("");
@@ -49,7 +52,7 @@ export default function NewClientForm({ t }: { t: Dict }) {
     setErrors(e);
     if (Object.keys(e).length) return;
     // فحص فوري للتكرار من البيانات المحفوظة في الذاكرة
-    const input = Object.fromEntries(FIELDS.map((k) => [k, String(fd.get(k) ?? "")])) as unknown as ClientFields;
+    const input = { ...(Object.fromEntries(FIELDS.map((k) => [k, String(fd.get(k) ?? "")])) as unknown as ClientFields), services };
     const email = input.email.trim().toLowerCase();
     const nid = normalizeDigits(input.national_id.trim());
     const users = s.data?.Users ?? [];
@@ -82,7 +85,7 @@ export default function NewClientForm({ t }: { t: Dict }) {
       id: tid, role: "client", file_status: "active", full_name: input.full_name.trim(), email, phone: normalizeDigits(input.phone),
       phone_alt: normalizeDigits(input.phone_alt), national_id: nid, tax_registration_number: normalizeDigits(input.tax_registration_number),
       client_type: input.client_type, company_name: input.company_name, tax_office: input.tax_office, address: input.address,
-      id_front_file: "", id_back_file: "", created_at: nowIso(),
+      id_front_file: "", id_back_file: "", created_at: nowIso(), services: serializeServices(services),
     };
     setCreated({ id: tid, saving: true, name: optimistic.full_name, phone: optimistic.phone, email, password });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -227,6 +230,12 @@ export default function NewClientForm({ t }: { t: Dict }) {
             <input name="address" className="input" />
           </div>
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="mb-1 text-sm font-bold text-gold-600">{t.arch.servicesTitle}</legend>
+        <p className="mb-3 text-xs text-slate-500">{t.arch.servicesHint}</p>
+        <ServiceChecks t={t} value={services} onChange={setServices} />
       </fieldset>
 
       <fieldset>

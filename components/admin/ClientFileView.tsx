@@ -24,6 +24,8 @@ import Compliance from "@/components/portal/Compliance";
 import InvoicesArchive from "@/components/portal/InvoicesArchive";
 import Billing from "@/components/portal/Billing";
 import { asPortal } from "@/components/portal/types";
+import AdminArchive from "./archive/AdminArchive";
+import ServicesTab from "./archive/ServicesTab";
 
 const fsTone: Record<string, string> = {
   onboarding: "bg-amber-50 text-amber-800 ring-amber-200",
@@ -38,7 +40,7 @@ export default function ClientFileView() {
   const me = useMe();
   const { t, locale } = useI18n();
   const isAdmin = me.role === "admin";
-  const [tab, setTab] = useState<"data" | "requests" | "vault" | "invoices" | "billing" | "ops" | "notes">("data");
+  const [tab, setTab] = useState<"data" | "services" | "archive" | "requests" | "vault" | "invoices" | "billing" | "ops" | "notes">("data");
 
   return (
     <Guard s={s}>
@@ -88,6 +90,8 @@ export default function ClientFileView() {
             <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
               {([
                 ["data", t.admin.clientData],
+                ["services", `⚙️ ${t.arch.servicesTab}`],
+                ["archive", `🗄️ ${t.arch.myArchive}`],
                 ["requests", t.admin.history],
                 ["vault", t.portal.vaultTitle],
                 ["invoices", t.portal.invoicesTitle],
@@ -164,6 +168,14 @@ export default function ClientFileView() {
               </>
             )}
             </>
+            )}
+
+            {!saving && tab === "services" && <ServicesTab client={c} savedPortals={saved} />}
+
+            {!saving && tab === "archive" && (
+              <Panel title={`🗄️ ${t.arch.archiveTitle}`} hint={t.arch.archiveHint}>
+                <AdminArchive clientId={c.id} />
+              </Panel>
             )}
 
             {!saving && tab === "requests" && (

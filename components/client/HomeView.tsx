@@ -11,6 +11,7 @@ import { desc, isTmp } from "@/lib/view";
 import type { Status } from "@/lib/i18n";
 import TaxBanner from "@/components/portal/TaxBanner";
 import Stepper from "@/components/portal/Stepper";
+import ClientHeader from "./ClientHeader";
 
 export default function ClientHome() {
   const s = useClient();
@@ -18,16 +19,6 @@ export default function ClientHome() {
   const { t, locale } = useI18n();
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm text-slate-500">{t.dash.welcome}</p>
-          <h1 className="text-2xl font-bold text-navy-900">{me.name}</h1>
-        </div>
-        <Link href="/dashboard/new" className="btn-gold">
-          <Icon name="plus" className="h-4 w-4" />
-          {t.dash.newRequest}
-        </Link>
-      </div>
       <Guard s={s}>
         {(d) => {
           const list = [...d.Requests].sort(desc());
@@ -35,6 +26,7 @@ export default function ClientHome() {
           const ref = (r: (typeof list)[number]) => (isTmp(r.id) ? "…" : `#${r.reference_no}`);
           return (
             <>
+              {d.Me ? <ClientHeader me={d.Me} /> : <h1 className="text-2xl font-bold text-navy-900">{me.name}</h1>}
               <TaxBanner clientType={d.Me?.client_type ?? "individual"} />
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <Stat label={t.dash.openCount} value={count((st) => st === "pending_review" || st === "in_progress")} tone="text-blue-700" />

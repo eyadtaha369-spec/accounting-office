@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { officeWhatsApp } from "@/lib/contact";
 import { useI18n } from "@/components/store/I18n";
 import { Icon } from "@/components/Icons";
 import { daysUntil, deadlinesForClient } from "@/lib/tax";
@@ -30,10 +30,9 @@ export default function TaxBanner({ clientType }: { clientType: string }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/dashboard/invoices" className="btn-gold px-4 py-2">
-            <Icon name="upload" className="h-4 w-4" /> {t.portal.uploadInvoices}
-          </Link>
-          <Link href="/dashboard/new?type=tax_return" className="btn-ghost-light px-4 py-2">{t.portal.requestFiling}</Link>
+          <a href={officeWhatsApp(t.footer.phone, `${t.portal.deadlines[next.key]} — ${next.period}`)} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2">
+            <Icon name="chat" className="h-4 w-4" /> {t.arch.contactOffice}
+          </a>
         </div>
       </div>
     </div>

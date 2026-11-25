@@ -40,7 +40,7 @@ export default function PublicNav({
           ) : (
             <>
               <Link href="/login" className="btn-ghost-light">{t.nav.login}</Link>
-              <Link href="/register" className="btn-gold">{t.nav.register}</Link>
+              <Link href="/#contact" className="btn-gold">{t.nav.contact}</Link>
             </>
           )}
         </div>
@@ -67,7 +67,7 @@ export default function PublicNav({
               ) : (
                 <>
                   <Link href="/login" className="btn-ghost-light">{t.nav.login}</Link>
-                  <Link href="/register" className="btn-gold">{t.nav.register}</Link>
+                  <Link href="/#contact" className="btn-gold">{t.nav.contact}</Link>
                 </>
               )}
             </div>

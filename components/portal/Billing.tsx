@@ -63,11 +63,7 @@ export default function Billing({ store: s, rows, clientId }: { store: PortalSto
             <button onClick={() => setForm(form === "charge" ? null : "charge")} className="btn-navy">+ {p.addCharge}</button>
             <button onClick={() => setForm(form === "payment" ? null : "payment")} className="btn bg-emerald-600 text-white hover:bg-emerald-700">✓ {p.recordPayment}</button>
           </>
-        ) : (
-          <button onClick={() => setForm(form === "payment" ? null : "payment")} className="btn-gold">
-            <Icon name="upload" className="h-4 w-4" /> {p.submitPayment}
-          </button>
-        )}
+        ) : null /* بوابة العميل للعرض فقط */}
       </div>
 
       {form === "charge" && staff && clientId && (
@@ -85,7 +81,7 @@ export default function Billing({ store: s, rows, clientId }: { store: PortalSto
           }}
         />
       )}
-      {form === "payment" && (
+      {form === "payment" && staff && (
         <PaymentForm
           staff={staff}
           onDone={() => setForm(null)}
