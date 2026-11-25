@@ -11,6 +11,8 @@ export type AdminData = {
   Tasks: R[];
   Finance: R[];        // فارغ لغير الأدمن
   Documents: R[];
+  MonthlyInvoices: R[];
+  BillingLedger: R[];
   Portals: { client_id: string; portal: string }[]; // أي البوابات لها بيانات محفوظة فقط
 };
 
@@ -20,6 +22,8 @@ export type ClientData = {
   Files: R[];
   StatusHistory: R[];
   Documents: R[];
+  MonthlyInvoices: R[];
+  BillingLedger: R[];
 };
 
 export type Snapshot<T> = {

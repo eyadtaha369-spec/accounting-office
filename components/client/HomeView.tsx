@@ -9,6 +9,8 @@ import { fmtDate } from "@/lib/format";
 import { requestLabel } from "@/lib/labels";
 import { desc, isTmp } from "@/lib/view";
 import type { Status } from "@/lib/i18n";
+import TaxBanner from "@/components/portal/TaxBanner";
+import Stepper from "@/components/portal/Stepper";
 
 export default function ClientHome() {
   const s = useClient();
@@ -33,6 +35,7 @@ export default function ClientHome() {
           const ref = (r: (typeof list)[number]) => (isTmp(r.id) ? "…" : `#${r.reference_no}`);
           return (
             <>
+              <TaxBanner clientType={d.Me?.client_type ?? "individual"} />
               <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <Stat label={t.dash.openCount} value={count((st) => st === "pending_review" || st === "in_progress")} tone="text-blue-700" />
                 <Stat label={t.dash.needsCount} value={count((st) => st === "needs_documents")} tone="text-orange-600" />
@@ -60,7 +63,10 @@ export default function ClientHome() {
                               <p className="mt-2 rounded-lg bg-orange-50 p-2 text-xs text-orange-800">{r.admin_message}</p>
                             )}
                           </div>
-                          <StatusBadge status={r.status as Status} label={t.status[r.status as Status]} />
+                          <div className="flex shrink-0 flex-col items-stretch gap-2 sm:w-56">
+                            <StatusBadge status={r.status as Status} label={t.status[r.status as Status]} />
+                            <Stepper status={r.status} compact />
+                          </div>
                         </Link>
                       </li>
                     ))}

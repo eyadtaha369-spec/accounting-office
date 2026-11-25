@@ -16,6 +16,7 @@ export type UploadTicket = {
   requestId?: string;
   clientId?: string;
   kind?: "client_attachment" | "office_deliverable";
+  purpose?: "invoice" | "receipt" | "vault";
   exp: number;
   n: string;
 };

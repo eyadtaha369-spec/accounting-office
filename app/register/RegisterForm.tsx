@@ -85,7 +85,7 @@ export default function RegisterForm({ t }: { t: Dict }) {
   const Req = () => <span className="text-red-500"> *</span>;
 
   return (
-    <div className="card p-6 sm:p-8">
+    <div className="card border-t-4 border-t-gold-500 p-6 shadow-lg sm:p-8">
       <h1 className="text-2xl font-bold text-navy-900">{t.auth.registerTitle}</h1>
       <p className="mt-1 text-sm text-slate-500">{t.auth.registerSubtitle}</p>
 

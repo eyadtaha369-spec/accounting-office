@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import FileList from "@/components/FileList";
 import ManageRequest from "./ManageRequest";
+import WaButton from "@/components/portal/WaButton";
+import { statusMessage } from "@/lib/wa";
 import { useAdmin } from "@/components/store/stores";
 import { useI18n } from "@/components/store/I18n";
 import { Guard } from "@/components/store/SyncBar";
@@ -37,7 +39,26 @@ export default function RequestDetailView() {
                       <h1 className="mt-1 text-xl font-bold text-navy-900">{requestLabel(t, r.request_type, r.sub_type)}</h1>
                       <p className="mt-1 text-sm text-slate-500">{fmtDate(r.created_at, locale, true)}</p>
                     </div>
-                    <StatusBadge status={status} label={t.status[status]} />
+                    <div className="flex flex-col items-end gap-2">
+                      <StatusBadge status={status} label={t.status[status]} />
+                      {c && (
+                        <WaButton
+                          small
+                          phone={c.phone}
+                          label={t.portal.wa.notify}
+                          text={statusMessage({
+                            name: c.full_name,
+                            service: requestLabel(t, r.request_type, r.sub_type),
+                            status,
+                            statusLabel: t.status[status],
+                            ref: r.reference_no,
+                            url: typeof window !== "undefined" ? `${window.location.origin}/dashboard/requests/${r.id}` : "",
+                            brand: t.brand,
+                            message: r.admin_message,
+                          })}
+                        />
+                      )}
+                    </div>
                   </div>
                   {r.description && <p className="mt-5 whitespace-pre-wrap rounded-xl bg-page p-4 text-sm leading-7 text-slate-700">{r.description}</p>}
                 </div>

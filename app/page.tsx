@@ -4,6 +4,7 @@ import Logo from "@/components/Logo";
 import { Icon } from "@/components/Icons";
 import { getDict } from "@/lib/locale";
 import { getSession } from "@/lib/auth";
+import Calculators from "@/components/Calculators";
 
 const whyIcons = ["lock", "clock", "badge", "pulse"] as const;
 const serviceIcons = ["percent", "landmark", "users", "receipt", "search", "building", "bulb"] as const;
@@ -111,6 +112,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <Calculators t={t} />
 
       {/* Steps */}
       <section id="steps" className="scroll-mt-16 bg-white py-20">

@@ -10,6 +10,7 @@ import { Icon } from "@/components/Icons";
 import { useClient } from "@/components/store/stores";
 import { useMe } from "@/components/store/I18n";
 import { nowIso, replaceById, tmpId } from "@/lib/view";
+import PoaNotice from "@/components/portal/PoaNotice";
 
 export default function NewRequestForm({ t, initialType }: { t: Dict; initialType: string }) {
   const s = useClient();
@@ -58,7 +59,13 @@ export default function NewRequestForm({ t, initialType }: { t: Dict; initialTyp
     router.push("/dashboard");
   }
 
+  // الخدمات الضريبية والتأسيسية تحتاج توكيلاً رسمياً للمكتب
+  const formal = ["tax_return", "company_formation", "tax_card", "e_invoice", "tax_inspection", "financial_statements"].includes(type);
+  const needsPoa = formal && s.data?.Me && s.data.Me.poa_has !== "yes";
+
   return (
+    <div className="space-y-4">
+    {needsPoa && <PoaNotice />}
     <form onSubmit={submit} className="card space-y-6 p-5 sm:p-7">
       <div>
         <label className="label">{t.dash.chooseService}</label>
@@ -137,5 +144,6 @@ export default function NewRequestForm({ t, initialType }: { t: Dict; initialTyp
         {t.dash.submit}
       </button>
     </form>
+    </div>
   );
 }

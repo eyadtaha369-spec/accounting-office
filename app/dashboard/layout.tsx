@@ -24,6 +24,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
             items={[
               { href: "/dashboard", label: t.dash.myRequests, icon: "list", exact: true },
               { href: "/dashboard/new", label: t.dash.newRequest, icon: "plus" },
+              { href: "/dashboard/invoices", label: t.portal.invoicesTitle, icon: "receipt" },
+              { href: "/dashboard/billing", label: t.portal.billingTitle, icon: "wallet" },
               { href: "/dashboard/profile", label: t.dash.profile, icon: "user" },
             ]}
           >

@@ -18,6 +18,12 @@ import { Guard } from "@/components/store/SyncBar";
 import { fmtDate } from "@/lib/format";
 import { PORTAL_URLS } from "@/lib/i18n";
 import { desc, dueAsc, isTmp } from "@/lib/view";
+import { useState } from "react";
+import { AdminVault } from "@/components/portal/Vault";
+import Compliance from "@/components/portal/Compliance";
+import InvoicesArchive from "@/components/portal/InvoicesArchive";
+import Billing from "@/components/portal/Billing";
+import { asPortal } from "@/components/portal/types";
 
 const fsTone: Record<string, string> = {
   onboarding: "bg-amber-50 text-amber-800 ring-amber-200",
@@ -32,6 +38,7 @@ export default function ClientFileView() {
   const me = useMe();
   const { t, locale } = useI18n();
   const isAdmin = me.role === "admin";
+  const [tab, setTab] = useState<"data" | "requests" | "vault" | "invoices" | "billing" | "ops" | "notes">("data");
 
   return (
     <Guard s={s}>
@@ -78,6 +85,24 @@ export default function ClientFileView() {
               </div>
             </div>
 
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+              {([
+                ["data", t.admin.clientData],
+                ["requests", t.admin.history],
+                ["vault", t.portal.vaultTitle],
+                ["invoices", t.portal.invoicesTitle],
+                ["billing", t.portal.billingTitle],
+                ["ops", `${t.ops.nav.records} / ${t.ops.nav.tasks}`],
+                ["notes", t.admin.internalNotes],
+              ] as const).map(([k, label]) => (
+                <button key={k} onClick={() => setTab(k)} className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold ring-1 transition ${tab === k ? "bg-navy-900 text-white ring-navy-900" : "bg-white text-slate-600 ring-slate-200 hover:ring-navy-600"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {tab === "data" && (
+            <>
             <div className="grid gap-6 lg:grid-cols-3">
               <section className="card p-5 sm:p-6 lg:col-span-2">
                 <h2 className="mb-4 font-bold text-navy-900">{t.admin.clientData}</h2>
@@ -125,6 +150,9 @@ export default function ClientFileView() {
 
             {!saving && (
               <>
+                <Panel title={`📜 ${t.portal.compliance}`}>
+                  <Compliance key={c.updated_at + c.id} client={c} />
+                </Panel>
                 <section className="card p-5 sm:p-6">
                   <h2 className="font-bold text-navy-900">{t.admin.portals}</h2>
                   {isAdmin && <p className="mt-1 text-xs text-slate-500">{t.admin.credsNote}</p>}
@@ -133,7 +161,12 @@ export default function ClientFileView() {
                     <PortalCard t={t} clientId={id} portal="e_invoice" title={t.admin.portalEinvoice} url={PORTAL_URLS.e_invoice} saved={saved.has("e_invoice")} canManage={isAdmin} />
                   </div>
                 </section>
+              </>
+            )}
+            </>
+            )}
 
+            {!saving && tab === "requests" && (
                 <section className="card overflow-hidden">
                   <div className="space-y-4 border-b border-slate-200 px-5 py-4">
                     <h2 className="font-bold text-navy-900">{t.admin.history}</h2>
@@ -141,7 +174,28 @@ export default function ClientFileView() {
                   </div>
                   <RequestsTable rows={requests} t={t} locale={locale} showClient={false} showCompleted empty={t.dash.noRequests} />
                 </section>
+            )}
 
+            {!saving && tab === "vault" && (
+              <Panel title={`🗂️ ${t.portal.vaultTitle}`} hint={t.portal.vaultHint}>
+                <AdminVault client={c} />
+              </Panel>
+            )}
+
+            {!saving && tab === "invoices" && (
+              <Panel title={`🧾 ${t.portal.invoicesTitle}`} hint={t.portal.invoicesHint}>
+                <InvoicesArchive store={asPortal(s)} rows={d.MonthlyInvoices.filter((x) => x.client_id === id)} clientId={id} />
+              </Panel>
+            )}
+
+            {!saving && tab === "billing" && (
+              <Panel title={`💳 ${t.portal.billingTitle}`}>
+                <Billing store={asPortal(s)} rows={d.BillingLedger.filter((x) => x.client_id === id)} clientId={id} />
+              </Panel>
+            )}
+
+            {!saving && tab === "ops" && (
+              <>
                 <Panel title={t.ops.clientRecords}>
                   <RecordsPanel t={t} locale={locale} rows={records} clients={[]} lockedClientId={c.id} />
                 </Panel>
@@ -154,7 +208,10 @@ export default function ClientFileView() {
                     <DocsPanel t={t} locale={locale} rows={docs} clients={[]} url={s.url} lockedClientId={c.id} />
                   </Panel>
                 </div>
+              </>
+            )}
 
+            {!saving && tab === "notes" && (
                 <section className="card p-5 sm:p-6">
                   <h2 className="mb-4 font-bold text-navy-900">{t.admin.internalNotes}</h2>
                   <NoteForm clientId={id} />
@@ -167,7 +224,6 @@ export default function ClientFileView() {
                     ))}
                   </ul>
                 </section>
-              </>
             )}
           </div>
         );

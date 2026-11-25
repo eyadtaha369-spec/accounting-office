@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { snapshot, type Row } from "@/lib/sheets";
 import { downloadTicket } from "@/lib/tickets";
 import type { AdminData, ClientData, SnapshotResult } from "@/lib/store-types";
+import { vaultDriveIds } from "@/lib/vault";
 
 const strip = ({ password_hash, ...u }: Row) => (void password_hash, u);
 
@@ -17,7 +18,7 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
   const s = await getSession();
   if (!s || s.role === "client") throw new Error("forbidden");
   const isAdmin = s.role === "admin";
-  const tables = ["Users", "Requests", "Files", "StatusHistory", "Notes", "ServiceRecords", "Tasks", "Documents", "Credentials", ...(isAdmin ? ["Finance"] : [])];
+  const tables = ["Users", "Requests", "Files", "StatusHistory", "Notes", "ServiceRecords", "Tasks", "Documents", "Credentials", "MonthlyInvoices", "BillingLedger", ...(isAdmin ? ["Finance"] : [])];
   const snap = await snapshot(tables, known);
   if (snap.unchanged) return { unchanged: true, version: snap.version };
   const t = snap.tables ?? {};
@@ -32,12 +33,16 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
     Tasks: t.Tasks ?? [],
     Finance: isAdmin ? t.Finance ?? [] : [],
     Documents: t.Documents ?? [],
+    MonthlyInvoices: t.MonthlyInvoices ?? [],
+    BillingLedger: t.BillingLedger ?? [],
     Portals: isAdmin ? (t.Credentials ?? []).filter((c) => c.username_enc || c.password_enc).map((c) => ({ client_id: c.client_id, portal: c.portal })) : [],
   };
   const tickets = sign([
     ...data.Files.map((f) => f.drive_file_id),
     ...data.Documents.map((d) => d.drive_file_id),
-    ...users.flatMap((u) => [u.id_front_file, u.id_back_file]),
+    ...users.flatMap((u) => [u.id_front_file, u.id_back_file, ...vaultDriveIds(u)]),
+    ...data.MonthlyInvoices.map((i) => i.drive_file_id),
+    ...data.BillingLedger.map((b) => b.receipt_file),
   ]);
   return { unchanged: false, version: snap.version, data, tickets, ticketsAt: Date.now(), url: process.env.APPS_SCRIPT_URL! };
 }
@@ -46,7 +51,7 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
 export async function loadClientSnapshot(known?: string): Promise<SnapshotResult<ClientData>> {
   const s = await getSession();
   if (!s) throw new Error("forbidden");
-  const snap = await snapshot(["Users", "Requests", "Files", "StatusHistory", "Documents"], known);
+  const snap = await snapshot(["Users", "Requests", "Files", "StatusHistory", "Documents", "MonthlyInvoices", "BillingLedger"], known);
   if (snap.unchanged) return { unchanged: true, version: snap.version };
   const t = snap.tables ?? {};
   const me = (t.Users ?? []).find((u) => u.id === s.uid);
@@ -58,7 +63,15 @@ export async function loadClientSnapshot(known?: string): Promise<SnapshotResult
     Files: (t.Files ?? []).filter((f) => f.client_id === s.uid),
     StatusHistory: (t.StatusHistory ?? []).filter((h) => ids.has(h.request_id)),
     Documents: (t.Documents ?? []).filter((d) => d.client_id === s.uid && d.visible_to_client === "yes"),
+    MonthlyInvoices: (t.MonthlyInvoices ?? []).filter((i) => i.client_id === s.uid),
+    BillingLedger: (t.BillingLedger ?? []).filter((b) => b.client_id === s.uid),
   };
-  const tickets = sign([...data.Files.map((f) => f.drive_file_id), ...data.Documents.map((d) => d.drive_file_id)]);
+  const tickets = sign([
+    ...data.Files.map((f) => f.drive_file_id),
+    ...data.Documents.map((d) => d.drive_file_id),
+    ...(data.Me ? vaultDriveIds(data.Me) : []),
+    ...data.MonthlyInvoices.map((i) => i.drive_file_id),
+    ...data.BillingLedger.map((b) => b.receipt_file),
+  ]);
   return { unchanged: false, version: snap.version, data, tickets, ticketsAt: Date.now(), url: process.env.APPS_SCRIPT_URL! };
 }

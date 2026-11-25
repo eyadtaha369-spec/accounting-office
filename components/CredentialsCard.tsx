@@ -24,7 +24,7 @@ export default function CredentialsCard({ t, name, phone, email, password }: { t
           {copied ? t.admin.copied : t.admin.copyCreds}
         </button>
         <a href={whatsappLink(phone, text)} target="_blank" rel="noopener noreferrer" className="btn bg-emerald-600 text-white hover:bg-emerald-700">
-          {t.admin.sendWhatsapp}
+          {t.portal.wa.sendCreds}
         </a>
       </div>
     </div>

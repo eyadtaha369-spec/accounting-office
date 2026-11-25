@@ -10,6 +10,8 @@ import { Guard } from "@/components/store/SyncBar";
 import { fmtDate } from "@/lib/format";
 import { OPEN_STATUSES, type Status } from "@/lib/i18n";
 import { asc, clients, desc, dueAsc, withNames } from "@/lib/view";
+import TaxRadar from "@/components/portal/TaxRadar";
+import RenewalAlerts from "@/components/portal/RenewalAlerts";
 
 export default function HomeView() {
   const s = useAdmin();
@@ -72,6 +74,10 @@ export default function HomeView() {
             <Panel title={t.admin.active} hint={t.admin.activeHint}>
               <RequestsTable rows={rows as unknown as AdminRequestRow[]} t={t} locale={locale} empty={t.admin.noActive} />
             </Panel>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <TaxRadar users={d.Users} records={d.ServiceRecords} />
+              <RenewalAlerts users={d.Users} />
+            </div>
             <div className="grid gap-6 lg:grid-cols-2">
               <Panel title={o.upcomingTasks} action={<Link href="/admin/tasks" className="text-sm font-semibold text-navy-700 hover:text-gold-600">{o.viewAll}</Link>}>
                 <TasksPanel t={t} locale={locale} rows={upcoming} clients={[]} compact />

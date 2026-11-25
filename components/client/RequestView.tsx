@@ -13,6 +13,9 @@ import { uploadDirect } from "@/lib/direct";
 import { getRequestUploadTicket, registerUploads, resubmitRequest } from "@/app/file-actions";
 import { asc, nowIso, patchById, replaceById, tmpId } from "@/lib/view";
 import type { Status } from "@/lib/i18n";
+import Stepper from "@/components/portal/Stepper";
+import { openDriveFile } from "@/components/portal/openFile";
+import { Icon } from "@/components/Icons";
 
 export default function RequestView() {
   const { id } = useParams<{ id: string }>();
@@ -39,13 +42,25 @@ export default function RequestView() {
                 <StatusBadge status={status} label={t.status[status]} />
               </div>
               {r.description && <p className="mt-5 whitespace-pre-wrap rounded-xl bg-page p-4 text-sm leading-7 text-slate-700">{r.description}</p>}
-            </div>
-            {r.admin_message && (
-              <div className={`rounded-2xl p-5 ring-1 ${status === "needs_documents" ? "bg-orange-50 ring-orange-200" : "bg-blue-50 ring-blue-200"}`}>
-                <h2 className="text-sm font-bold text-navy-900">{t.dash.officeMessage}</h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-800">{r.admin_message}</p>
+              <div className="mt-6 rounded-2xl bg-page p-4 sm:p-5">
+                <Stepper status={r.status} />
+                {r.admin_message && (
+                  <div className={`mt-4 rounded-xl p-4 ring-1 ${status === "needs_documents" ? "bg-orange-50 ring-orange-200" : "bg-white ring-slate-200"}`}>
+                    <h2 className="text-xs font-bold text-gold-600">✍️ {t.portal.accountantNotes}</h2>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-7 text-slate-800">{r.admin_message}</p>
+                  </div>
+                )}
+                {files.some((f) => f.kind === "office_deliverable") && (
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {files.filter((f) => f.kind === "office_deliverable").map((f) => (
+                      <button key={f.id} onClick={() => openDriveFile(s.url, f.ticket)} className="btn-gold">
+                        <Icon name="download" className="h-4 w-4" /> {t.portal.downloadFinal}: {f.file_name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
             {status === "needs_documents" && (
               <div className="card p-5 sm:p-6">
                 <h2 className="mb-4 font-bold text-navy-900">{t.dash.uploadMore}</h2>

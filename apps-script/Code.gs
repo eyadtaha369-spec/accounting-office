@@ -15,7 +15,10 @@
 const TABLES = {
   Users: ['id', 'role', 'full_name', 'email', 'password_hash', 'phone', 'phone_alt', 'national_id',
           'id_front_file', 'id_back_file', 'tax_registration_number', 'client_type', 'company_name',
-          'tax_office', 'created_at', 'updated_at', 'address', 'file_status'],
+          'tax_office', 'created_at', 'updated_at', 'address', 'file_status',
+          // تواريخ الانتهاء + التوكيل + خزنة المستندات الدائمة (قيم الخزنة: drive:ID|اسم الملف أو url:رابط)
+          'cr_expiry', 'tax_card_expiry', 'poa_has', 'poa_number', 'poa_letter_year', 'poa_office', 'poa_file',
+          'vault_tax_card', 'vault_commercial_register', 'vault_vat_certificate', 'vault_incorporation', 'vault_balance_sheet'],
   Requests: ['id', 'reference_no', 'client_id', 'request_type', 'sub_type', 'description', 'status',
              'admin_message', 'assigned_to', 'completed_at', 'created_at', 'updated_at'],
   Files: ['id', 'request_id', 'client_id', 'uploaded_by', 'kind', 'drive_file_id', 'file_name',
@@ -32,6 +35,12 @@ const TABLES = {
             'created_by', 'created_at', 'updated_at'],
   Documents: ['id', 'client_id', 'title', 'category', 'drive_file_id', 'file_name', 'mime_type',
               'size_bytes', 'visible_to_client', 'uploaded_by', 'created_at'],
+  // أرشيف الفواتير الشهرية (سنة ← شهر ← مبيعات/مشتريات)
+  MonthlyInvoices: ['id', 'client_id', 'year', 'month', 'category', 'drive_file_id', 'file_name', 'mime_type',
+                    'link', 'note', 'uploaded_by', 'created_at'],
+  // كشف حساب الأتعاب: charge = أتعاب مستحقة | payment = دفعة (إيصال تحويل)
+  BillingLedger: ['id', 'client_id', 'kind', 'title', 'amount', 'date', 'status', 'method', 'receipt_file',
+                  'receipt_name', 'note', 'created_by', 'created_at', 'updated_at'],
 };
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;

@@ -18,6 +18,7 @@ export default function PublicNav({
   const links = [
     { href: "/#why", label: t.nav.why },
     { href: "/#services", label: t.nav.services },
+    { href: "/#calculators", label: t.nav.calculators },
     { href: "/#steps", label: t.nav.steps },
     { href: "/#contact", label: t.nav.contact },
   ];
