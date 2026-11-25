@@ -4,6 +4,7 @@ import { batch, insert, remove, update, type Row } from "@/lib/sheets";
 import { refreshSite } from "@/lib/site-server";
 import { PAGE_ICONS, SETTING_FIELDS, type IconName } from "@/lib/site";
 import { isServiceKey } from "@/lib/services";
+import { POA_KEYS } from "@/lib/poa";
 
 const str = (v: unknown, max = 300) => String(v ?? "").trim().slice(0, max);
 const yn = (v: unknown) => (v === false || v === "no" ? "no" : "yes");
@@ -77,4 +78,14 @@ export async function saveSiteSettings(values: Record<string, { ar?: string; en?
   const rows = (await batch(ops)) as Row[];
   refreshSite();
   return { ok: true as const, rows };
+}
+
+/** حفظ صيغة توكيل أو بيانات المكتب في التوكيلات (نص طويل) */
+export async function savePoaSetting(key: keyof typeof POA_KEYS, value: string) {
+  await requireAdmin();
+  if (!(key in POA_KEYS)) return { ok: false as const };
+  const max = key === "client" || key === "accountant" ? 20000 : 200;
+  const [row] = (await batch([{ op: "upsert", table: "site_settings", row: { id: POA_KEYS[key], value_ar: String(value ?? "").slice(0, max), value_en: "" } }])) as Row[];
+  refreshSite();
+  return { ok: true as const, row };
 }

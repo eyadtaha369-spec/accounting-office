@@ -76,7 +76,8 @@ export async function loadClientSnapshot(known?: string): Promise<SnapshotResult
     ArchiveDocs: [],
     // الصفحات المفعلة فقط + إعدادات التواصل العامة
     SitePages: sortPages((t.site_pages ?? []).filter((p) => p.is_active !== "no")),
-    SiteSettings: (t.site_settings ?? []).filter((x) => !x.id.startsWith("_")),
+    // صيغة توكيل المحاسب داخلية — لا تُرسل للعميل
+    SiteSettings: (t.site_settings ?? []).filter((x) => !x.id.startsWith("_") && x.id !== "accountant_poa_template"),
   };
   // الأرشيف: فقط السنوات والمستندات الظاهرة، وفي الخدمات المفعلة لهذا العميل (التصفية في الخادم)
   const hiddenYears = new Set((t.ArchiveYears ?? []).filter((y) => y.client_id === s.uid && y.is_visible === "no").map((y) => y.year));

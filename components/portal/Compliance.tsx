@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useI18n } from "@/components/store/I18n";
+import { useI18n, useMe } from "@/components/store/I18n";
+import PoaDialog from "./PoaDialog";
 import { useAdmin } from "@/components/store/stores";
 import { updateCompliance } from "@/app/portal-actions";
 import { patchById } from "@/lib/view";
@@ -11,6 +12,8 @@ import type { R } from "@/lib/store-types";
 export default function Compliance({ client }: { client: R }) {
   const s = useAdmin();
   const { t } = useI18n();
+  const me = useMe();
+  const [poaOpen, setPoaOpen] = useState(false);
   const p = t.portal;
   const [f, setF] = useState({
     cr_expiry: client.cr_expiry ?? "",
@@ -32,6 +35,22 @@ export default function Compliance({ client }: { client: R }) {
   }
   return (
     <div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 px-5 py-3">
+        <button type="button" onClick={() => setPoaOpen(true)} className="btn-gold">📜 {t.poaT.openPoa}</button>
+        {me.role === "admin" && (
+          <a href="/admin/settings#poa" className="text-xs text-slate-500 underline hover:text-navy-800">✏ {t.poaT.tab}</a>
+        )}
+      </div>
+      {poaOpen && (
+        <PoaDialog
+          settings={s.data?.SiteSettings ?? []}
+          client={client}
+          kinds={["client", "accountant"]}
+          title={`${t.poaT.openPoa} — ${client.full_name}`}
+          hint={t.poaT.placeholdersHint}
+          onClose={() => setPoaOpen(false)}
+        />
+      )}
       <form onSubmit={save} className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <label className="label">{p.crExpiry}</label>
