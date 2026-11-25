@@ -2,7 +2,7 @@ import {
   Lock, Clock, Award, Activity, Building2, Receipt, Cpu, Search, BookOpen, ShieldCheck, User, List, Upload,
   CircleCheck, Plus, LayoutGrid, Users, Phone, Mail, MapPin, ExternalLink, FileText, LogOut, Percent, Landmark,
   Briefcase, Lightbulb, ClipboardList, CalendarClock, Wallet, FolderArchive, FileSpreadsheet, Menu, X, Trash2,
-  Pencil, Download, TrendingUp, TrendingDown, AlertTriangle, Eye, EyeOff, Camera, FolderOpen, FolderPlus, Wand2, MessageCircle, type LucideIcon,
+  Pencil, Download, TrendingUp, TrendingDown, AlertTriangle, Eye, EyeOff, Camera, FolderOpen, FolderPlus, Wand2, MessageCircle, Calculator, Scale, Home, PieChart, Coins, Gavel, Handshake, ClipboardCheck, Globe, Truck, Factory, HeartPulse, GraduationCap, Settings, Megaphone, ArrowUp, ArrowDown, type LucideIcon,
 } from "lucide-react";
 
 export const icons = {
@@ -13,6 +13,9 @@ export const icons = {
   records: ClipboardList, tasks: CalendarClock, wallet: Wallet, archive: FolderArchive, report: FileSpreadsheet,
   menu: Menu, close: X, trash: Trash2, edit: Pencil, download: Download, up: TrendingUp, down: TrendingDown, alert: AlertTriangle,
   eye: Eye, eyeOff: EyeOff, camera: Camera, folder: FolderOpen, folderPlus: FolderPlus, wand: Wand2, chat: MessageCircle,
+  calculator: Calculator, scale: Scale, home: Home, pie: PieChart, coins: Coins, gavel: Gavel, handshake: Handshake,
+  clipboard: ClipboardCheck, globe: Globe, truck: Truck, factory: Factory, health: HeartPulse, education: GraduationCap,
+  settings: Settings, megaphone: Megaphone, arrowUp: ArrowUp, arrowDown: ArrowDown,
 } satisfies Record<string, LucideIcon>;
 
 export function Icon({ name, className = "h-5 w-5" }: { name: keyof typeof icons; className?: string }) {

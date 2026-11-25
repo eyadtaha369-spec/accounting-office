@@ -7,7 +7,7 @@ import { useI18n, useMe } from "@/components/store/I18n";
 import { addArchiveDoc, getArchiveTicket } from "@/app/archive-actions";
 import { uploadDirect } from "@/lib/direct";
 import { ALLOWED_DOC_TYPES, MAX_DOC_BYTES } from "@/lib/format";
-import { ARCHIVE_SECTIONS } from "@/lib/services";
+import { usePages } from "@/components/store/SitePages";
 import { nowIso, replaceById, tmpId } from "@/lib/view";
 
 /** إضافة مستند / Scan ورقة — يظهر فوراً في المجلد ويُرفع في الخلفية */
@@ -17,6 +17,8 @@ export default function AddDocForm({ clientId, years, year, section, lockSection
   const s = useAdmin();
   const me = useMe();
   const { t } = useI18n();
+  const pages = usePages();
+  const sections = ["general", ...pages.all.filter((p) => p.is_active !== "no" || p.id === section).map((p) => p.id)];
   const [f, setF] = useState({ year, section, title: "", visible: true });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
@@ -81,7 +83,7 @@ export default function AddDocForm({ clientId, years, year, section, lockSection
         <div className="sm:col-span-2">
           <label className="label">{t.arch.section}</label>
           <select value={f.section} disabled={lockSection} onChange={(e) => setF({ ...f, section: e.target.value })} className="input">
-            {ARCHIVE_SECTIONS.map((k) => <option key={k} value={k}>{t.arch.svc[k]}</option>)}
+            {sections.map((k) => <option key={k} value={k}>{pages.label(k)}</option>)}
           </select>
         </div>
       </div>

@@ -5,17 +5,25 @@ import { Icon } from "@/components/Icons";
 import { getDict } from "@/lib/locale";
 import { getSession } from "@/lib/auth";
 import Calculators from "@/components/Calculators";
+import { activePages } from "@/lib/site-server";
+import { pageDesc, pageIcon, pageTitle } from "@/lib/site";
+import { officeWhatsApp } from "@/lib/contact";
 
 const whyIcons = ["lock", "clock", "badge", "pulse"] as const;
-const serviceIcons = ["percent", "landmark", "users", "receipt", "search", "building", "bulb"] as const;
 
 export default async function Home() {
-  const { t, locale } = await getDict();
+  const { t, locale, site } = await getDict();
+  const services = activePages(site).filter((p) => p.show_home !== "no");
   const session = await getSession();
   const accountHref = session ? (session.role === "client" ? "/dashboard" : "/admin") : null;
 
   return (
     <>
+      {t.contact.announcement && (
+        <div className="relative z-40 bg-gold-500 px-4 py-2 text-center text-sm font-semibold text-navy-950">
+          <span className="inline-flex items-center gap-2"><Icon name="megaphone" className="h-4 w-4" /> {t.contact.announcement}</span>
+        </div>
+      )}
       <PublicNav t={t} locale={locale} accountHref={accountHref} />
 
       {/* Hero */}
@@ -45,9 +53,9 @@ export default async function Home() {
               <Link href="/login" className="btn-gold px-6 py-3 text-base">
                 {t.nav.login}
               </Link>
-              <Link href="/#contact" className="btn-ghost-light px-6 py-3 text-base">
+              <a href={officeWhatsApp(t.contact.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-ghost-light px-6 py-3 text-base">
                 {t.hero.ctaConsult}
-              </Link>
+              </a>
             </div>
           </div>
           <div className="lg:col-span-5">
@@ -90,25 +98,30 @@ export default async function Home() {
         <div className="container-x">
           <SectionHead title={t.services.title} subtitle={t.services.subtitle} />
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {t.services.items.map((s, i) => (
-              <div key={s.title} className="card group relative overflow-hidden p-7">
+            {services.map((p) => {
+              const lines = pageDesc(p, locale).split("\n").map((x) => x.trim()).filter(Boolean);
+              return (
+              <div key={p.id} className="card group relative overflow-hidden p-7">
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gold-500 to-gold-300 opacity-0 transition group-hover:opacity-100" />
                 <div className="flex items-center gap-3">
                   <div className="grid h-11 w-11 place-items-center rounded-xl bg-gold-500/15 text-gold-600">
-                    <Icon name={serviceIcons[i]} className="h-6 w-6" />
+                    <Icon name={pageIcon(p)} className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-bold text-navy-900">{s.title}</h3>
+                  <h3 className="text-lg font-bold text-navy-900">{pageTitle(p, locale)}</h3>
                 </div>
-                <ul className="mt-5 space-y-3">
-                  {s.points.map((p) => (
-                    <li key={p} className="flex gap-2.5 text-sm leading-6 text-slate-600">
-                      <Icon name="check" className="mt-0.5 h-4 w-4 text-gold-600" />
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
+                {lines.length > 0 && (
+                  <ul className="mt-5 space-y-3">
+                    {lines.map((l) => (
+                      <li key={l} className="flex gap-2.5 text-sm leading-6 text-slate-600">
+                        <Icon name="check" className="mt-0.5 h-4 w-4 text-gold-600" />
+                        <span>{l}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -153,13 +166,16 @@ export default async function Home() {
         <div className="container-x grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
           <div>
             <Logo name={t.brandShort} tag={t.brandTag} light />
-            <p className="mt-4 text-sm leading-7">{t.footer.about}</p>
+            <p className="mt-4 whitespace-pre-line text-sm leading-7">{t.footer.about}</p>
           </div>
           <div>
             <h4 className="font-semibold text-white">{t.footer.contact}</h4>
             <ul className="mt-4 space-y-3 text-sm">
-              <li className="flex gap-2"><Icon name="pin" className="h-5 w-5 text-gold-400" />{t.footer.address}</li>
-              <li className="flex gap-2"><Icon name="phone" className="h-5 w-5 text-gold-400" /><a href={`tel:${t.footer.phone.replace(/\s/g, "")}`} className="ltr-num hover:text-white">{t.footer.phone}</a></li>
+              <li className="flex gap-2 whitespace-pre-line"><Icon name="pin" className="h-5 w-5 text-gold-400" />{t.footer.address}</li>
+              {t.contact.phones.map((ph) => (
+                <li key={ph} className="flex gap-2"><Icon name="phone" className="h-5 w-5 text-gold-400" /><a href={`tel:${ph.replace(/[^\d+]/g, "")}`} className="ltr-num hover:text-white">{ph}</a></li>
+              ))}
+              <li className="flex gap-2"><Icon name="chat" className="h-5 w-5 text-gold-400" /><a href={officeWhatsApp(t.contact.whatsapp)} target="_blank" rel="noopener noreferrer" className="hover:text-white">{t.site.whatsappUs} <span className="ltr-num">({t.contact.whatsapp})</span></a></li>
               <li className="flex gap-2"><Icon name="mail" className="h-5 w-5 text-gold-400" /><a href={`mailto:${t.footer.email}`} className="hover:text-white">{t.footer.email}</a></li>
             </ul>
           </div>
@@ -167,7 +183,7 @@ export default async function Home() {
             <h4 className="font-semibold text-white">{t.footer.hours}</h4>
             <ul className="mt-4 space-y-2 text-sm">
               <li>{t.footer.hoursValue}</li>
-              <li>{t.footer.hoursValue2}</li>
+              {t.footer.hoursValue2 && t.footer.hoursValue2.split(" · ").map((h) => <li key={h}>{h}</li>)}
             </ul>
           </div>
           <div>

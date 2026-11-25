@@ -6,31 +6,32 @@ import AddDocForm from "./AddDocForm";
 import { DocRow, clientYears } from "./AdminArchive";
 import { Panel } from "@/components/ops/Panel";
 import { Icon } from "@/components/Icons";
-import { SERVICE_ICON } from "@/components/portal/serviceIcons";
+import { usePages } from "@/components/store/SitePages";
 import { useAdmin } from "@/components/store/stores";
 import { useI18n, useMe } from "@/components/store/I18n";
 import { setClientServices } from "@/app/archive-actions";
-import { parseServices, serializeServices, type ClientService } from "@/lib/services";
+import { parseServices, serializeServices } from "@/lib/services";
 import { PORTAL_URLS } from "@/lib/i18n";
 import { patchById, replaceById } from "@/lib/view";
 import type { R } from "@/lib/store-types";
 
 /** البوابة الحكومية لكل خدمة */
-const PORTAL_OF: Partial<Record<ClientService, "tax_portal" | "e_invoice">> = {
+const PORTAL_OF: Record<string, "tax_portal" | "e_invoice"> = {
   einvoice: "e_invoice", income: "tax_portal", vat: "tax_portal", payroll: "tax_portal",
 };
 /** الأقسام التي بها زر "رفع وتحميل الإقرار / الفواتير" مميز */
-const RETURN_SECTIONS: ClientService[] = ["einvoice", "income", "vat"];
+const RETURN_SECTIONS = ["einvoice", "income", "vat"];
 
 export default function ServicesTab({ client, savedPortals }: { client: R; savedPortals: Set<string> }) {
   const s = useAdmin();
   const me = useMe();
   const { t } = useI18n();
   const isAdmin = me.role === "admin";
-  const enabled = parseServices(client.services);
+  const pages = usePages();
+  const enabled = parseServices(client.services).filter((k) => pages.get(k));
   const docs = (s.data?.ArchiveDocs ?? []).filter((d) => d.client_id === client.id);
   const years = clientYears((s.data?.ArchiveYears ?? []).filter((y) => y.client_id === client.id), docs);
-  const [adding, setAdding] = useState<ClientService | null>(null);
+  const [adding, setAdding] = useState<string | null>(null);
 
   function setServices(list: string[]) {
     const services = serializeServices(list);
@@ -57,8 +58,8 @@ export default function ServicesTab({ client, savedPortals }: { client: R; saved
         return (
           <section key={k} className="card overflow-hidden">
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-navy-900 text-gold-400"><Icon name={SERVICE_ICON[k]} className="h-5 w-5" /></div>
-              <h2 className="flex-1 font-bold text-navy-900">{t.arch.svc[k]}</h2>
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-navy-900 text-gold-400"><Icon name={pages.icon(k)} className="h-5 w-5" /></div>
+              <h2 className="flex-1 font-bold text-navy-900">{pages.label(k)}{pages.get(k)?.is_active === "no" && <span className="ms-2 rounded bg-slate-200 px-1.5 text-[10px] font-normal text-slate-600">{t.site.inactive}</span>}</h2>
               {portal && (
                 <a href={PORTAL_URLS[portal]} target="_blank" rel="noopener noreferrer" className="btn-outline text-sm">
                   <Icon name="external" className="h-4 w-4" /> {t.arch.portalLinks}

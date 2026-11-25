@@ -30,7 +30,7 @@ export default function TaxBanner({ clientType }: { clientType: string }) {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <a href={officeWhatsApp(t.footer.phone, `${t.portal.deadlines[next.key]} — ${next.period}`)} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2">
+          <a href={officeWhatsApp(t.contact.whatsapp, `${t.portal.deadlines[next.key]} — ${next.period}`)} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2">
             <Icon name="chat" className="h-4 w-4" /> {t.arch.contactOffice}
           </a>
         </div>

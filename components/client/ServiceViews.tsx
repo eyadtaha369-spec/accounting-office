@@ -9,8 +9,10 @@ import { Icon } from "@/components/Icons";
 import { useClient } from "@/components/store/stores";
 import { useI18n } from "@/components/store/I18n";
 import { Guard } from "@/components/store/SyncBar";
-import { SERVICE_ICON, serviceOfRequest } from "@/components/portal/serviceIcons";
-import { parseServices, type ClientService } from "@/lib/services";
+import { serviceOfRequest } from "@/components/portal/serviceIcons";
+import { usePages } from "@/components/store/SitePages";
+import { pageDesc } from "@/lib/site";
+import { parseServices } from "@/lib/services";
 import { requestLabel } from "@/lib/labels";
 import { fmtDate } from "@/lib/format";
 import { desc } from "@/lib/view";
@@ -21,19 +23,24 @@ export function ServiceView() {
   const { key } = useParams<{ key: string }>();
   const s = useClient();
   const { t, locale } = useI18n();
+  const pages = usePages();
   return (
     <Guard s={s}>
       {(d) => {
-        const enabled = parseServices(d.Me?.services);
-        if (!enabled.includes(key as ClientService)) return <p className="card p-10 text-center text-slate-500">404</p>;
-        const k = key as ClientService;
+        const page = pages.active.find((p) => p.id === key);
+        if (!page || !parseServices(d.Me?.services).includes(key)) return <p className="card p-10 text-center text-slate-500">404</p>;
+        const k = key;
+        const about = pageDesc(page, locale);
         const docs = d.ArchiveDocs.filter((x) => x.section === k);
         const reqs = d.Requests.filter((r) => serviceOfRequest(r.request_type, r.sub_type) === k).sort(desc());
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-navy-900 text-gold-400"><Icon name={SERVICE_ICON[k]} className="h-7 w-7" /></div>
-              <h1 className="text-2xl font-bold text-navy-900">{t.arch.svc[k]}</h1>
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-navy-900 text-gold-400"><Icon name={pages.icon(k)} className="h-7 w-7" /></div>
+              <div>
+                <h1 className="text-2xl font-bold text-navy-900">{pages.label(k)}</h1>
+                {about && <p className="mt-1 text-sm text-slate-500">{about.split("\n").join(" · ")}</p>}
+              </div>
             </div>
             <Panel title={`📁 ${t.arch.sectionDocs}`}>
               <DocsByYear docs={docs} url={s.url} ticket={s.ticket} />

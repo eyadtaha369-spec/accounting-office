@@ -1,5 +1,6 @@
-/** رابط واتساب المكتب من رقم التذييل */
+import { waNumber } from "@/lib/site";
+
+/** رابط واتساب المكتب (الرقم من إعدادات الموقع) */
 export function officeWhatsApp(phone: string, text = "") {
-  const digits = phone.replace(/\D/g, "");
-  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+  return `https://wa.me/${waNumber(phone)}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
 }

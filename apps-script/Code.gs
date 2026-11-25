@@ -48,6 +48,10 @@ const TABLES = {
   // مستندات الأرشيف: section = general أو إحدى الخدمات (vat, income, einvoice, ...)
   ArchiveDocs: ['id', 'client_id', 'year', 'section', 'title', 'drive_file_id', 'file_name', 'mime_type', 'link',
                 'is_visible', 'uploaded_by', 'created_at', 'updated_at'],
+  // صفحات/خدمات الموقع الديناميكية (id = مفتاح الخدمة المستخدم في Users.services وأقسام الأرشيف)
+  site_pages: ['id', 'title_ar', 'title_en', 'desc_ar', 'desc_en', 'icon', 'sort', 'is_active', 'show_home', 'created_at', 'updated_at'],
+  // إعدادات الموقع: id = اسم الإعداد (hero_title, about, whatsapp, announcement ...)
+  site_settings: ['id', 'value_ar', 'value_en', 'created_at', 'updated_at'],
 };
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;

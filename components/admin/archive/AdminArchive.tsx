@@ -7,6 +7,7 @@ import { Icon } from "@/components/Icons";
 import { openDriveFile } from "@/components/portal/openFile";
 import { useAdmin } from "@/components/store/stores";
 import { useI18n } from "@/components/store/I18n";
+import { usePages } from "@/components/store/SitePages";
 import { deleteArchiveDoc, setDocVisibility, setYearVisibility } from "@/app/archive-actions";
 import { fmtDate } from "@/lib/format";
 import { isTmp, patchById, removeById } from "@/lib/view";
@@ -59,6 +60,7 @@ export function DocRow({ doc, clientId, showSection = true }: { doc: R; clientId
   const s = useAdmin();
   const { t, locale } = useI18n();
   const ops = useArchiveOps(clientId);
+  const pages = usePages();
   const pending = isTmp(doc.id);
   const on = doc.is_visible !== "no";
   return (
@@ -67,7 +69,7 @@ export function DocRow({ doc, clientId, showSection = true }: { doc: R; clientId
       <div className="min-w-0 flex-1">
         <div className="truncate font-medium text-slate-800">{doc.title}</div>
         <div className="text-xs text-slate-400">
-          {showSection && <span className="me-2 rounded bg-page px-1.5 py-0.5 text-slate-500">{t.arch.svc[(doc.section || "general") as keyof typeof t.arch.svc]}</span>}
+          {showSection && <span className="me-2 rounded bg-page px-1.5 py-0.5 text-slate-500">{pages.label(doc.section)}</span>}
           {pending ? t.arch.saving : fmtDate(doc.created_at, locale)}
         </div>
       </div>

@@ -3,7 +3,7 @@ import { requireStaff } from "@/lib/auth";
 import { batch, insert, remove, update, type Row } from "@/lib/sheets";
 import { downloadTicket, readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
 import { ALLOWED_DOC_TYPES, MAX_DOC_BYTES } from "@/lib/format";
-import { ARCHIVE_SECTIONS, serializeServices } from "@/lib/services";
+import { isServiceKey, serializeServices } from "@/lib/services";
 import type { Uploaded } from "@/lib/direct";
 
 const str = (v: unknown, max = 300) => String(v ?? "").trim().slice(0, max);
@@ -37,7 +37,7 @@ export async function addArchiveDoc(
 ) {
   const s = await requireStaff();
   if (!okYear(input.year)) return { ok: false as const };
-  const section = (ARCHIVE_SECTIONS as readonly string[]).includes(input.section) ? input.section : "general";
+  const section = isServiceKey(input.section) ? input.section : "general";
   const title = str(input.title, 200);
   let file: { id: string; name: string; mime: string } | null = null;
   if (ticket && up) {

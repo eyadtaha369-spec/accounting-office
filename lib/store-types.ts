@@ -15,6 +15,8 @@ export type AdminData = {
   BillingLedger: R[];
   ArchiveYears: R[];
   ArchiveDocs: R[];
+  SitePages: R[];      // كل الصفحات (المفعلة والموقوفة)
+  SiteSettings: R[];
   Portals: { client_id: string; portal: string }[]; // أي البوابات لها بيانات محفوظة فقط
 };
 
@@ -28,6 +30,8 @@ export type ClientData = {
   BillingLedger: R[];
   ArchiveYears: R[];   // الظاهرة فقط
   ArchiveDocs: R[];    // الظاهرة فقط وفي سنوات ظاهرة وخدمات مفعلة
+  SitePages: R[];      // المفعلة فقط
+  SiteSettings: R[];
 };
 
 export type Snapshot<T> = {

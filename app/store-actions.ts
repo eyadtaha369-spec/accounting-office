@@ -5,6 +5,7 @@ import { downloadTicket } from "@/lib/tickets";
 import type { AdminData, ClientData, SnapshotResult } from "@/lib/store-types";
 import { vaultDriveIds } from "@/lib/vault";
 import { parseServices } from "@/lib/services";
+import { sortPages } from "@/lib/site";
 
 const strip = ({ password_hash, ...u }: Row) => (void password_hash, u);
 
@@ -19,7 +20,7 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
   const s = await getSession();
   if (!s || s.role === "client") throw new Error("forbidden");
   const isAdmin = s.role === "admin";
-  const tables = ["Users", "Requests", "Files", "StatusHistory", "Notes", "ServiceRecords", "Tasks", "Documents", "Credentials", "MonthlyInvoices", "BillingLedger", "ArchiveYears", "ArchiveDocs", ...(isAdmin ? ["Finance"] : [])];
+  const tables = ["Users", "Requests", "Files", "StatusHistory", "Notes", "ServiceRecords", "Tasks", "Documents", "Credentials", "MonthlyInvoices", "BillingLedger", "ArchiveYears", "ArchiveDocs", "site_pages", "site_settings", ...(isAdmin ? ["Finance"] : [])];
   const snap = await snapshot(tables, known);
   if (snap.unchanged) return { unchanged: true, version: snap.version };
   const t = snap.tables ?? {};
@@ -38,6 +39,8 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
     BillingLedger: t.BillingLedger ?? [],
     ArchiveYears: t.ArchiveYears ?? [],
     ArchiveDocs: t.ArchiveDocs ?? [],
+    SitePages: sortPages(t.site_pages ?? []),
+    SiteSettings: (t.site_settings ?? []).filter((x) => !x.id.startsWith("_")),
     Portals: isAdmin ? (t.Credentials ?? []).filter((c) => c.username_enc || c.password_enc).map((c) => ({ client_id: c.client_id, portal: c.portal })) : [],
   };
   const tickets = sign([
@@ -55,7 +58,7 @@ export async function loadAdminSnapshot(known?: string): Promise<SnapshotResult<
 export async function loadClientSnapshot(known?: string): Promise<SnapshotResult<ClientData>> {
   const s = await getSession();
   if (!s) throw new Error("forbidden");
-  const snap = await snapshot(["Users", "Requests", "Files", "StatusHistory", "Documents", "MonthlyInvoices", "BillingLedger", "ArchiveYears", "ArchiveDocs"], known);
+  const snap = await snapshot(["Users", "Requests", "Files", "StatusHistory", "Documents", "MonthlyInvoices", "BillingLedger", "ArchiveYears", "ArchiveDocs", "site_pages", "site_settings"], known);
   if (snap.unchanged) return { unchanged: true, version: snap.version };
   const t = snap.tables ?? {};
   const me = (t.Users ?? []).find((u) => u.id === s.uid);
@@ -71,10 +74,15 @@ export async function loadClientSnapshot(known?: string): Promise<SnapshotResult
     BillingLedger: (t.BillingLedger ?? []).filter((b) => b.client_id === s.uid),
     ArchiveYears: [],
     ArchiveDocs: [],
+    // الصفحات المفعلة فقط + إعدادات التواصل العامة
+    SitePages: sortPages((t.site_pages ?? []).filter((p) => p.is_active !== "no")),
+    SiteSettings: (t.site_settings ?? []).filter((x) => !x.id.startsWith("_")),
   };
   // الأرشيف: فقط السنوات والمستندات الظاهرة، وفي الخدمات المفعلة لهذا العميل (التصفية في الخادم)
   const hiddenYears = new Set((t.ArchiveYears ?? []).filter((y) => y.client_id === s.uid && y.is_visible === "no").map((y) => y.year));
-  const enabled = new Set<string>(["general", ...parseServices(me?.services)]);
+  // الخدمة يجب أن تكون مفعلة للعميل ومفعلة كصفحة في الموقع
+  const live = new Set(data.SitePages.map((p) => p.id));
+  const enabled = new Set<string>(["general", ...parseServices(me?.services).filter((k) => live.has(k))]);
   data.ArchiveDocs = (t.ArchiveDocs ?? []).filter(
     (x) => x.client_id === s.uid && x.is_visible !== "no" && !hiddenYears.has(x.year) && enabled.has(x.section || "general")
   );

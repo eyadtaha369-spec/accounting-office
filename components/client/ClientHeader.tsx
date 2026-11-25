@@ -4,7 +4,7 @@ import { Icon } from "@/components/Icons";
 import { useI18n } from "@/components/store/I18n";
 import { officeWhatsApp } from "@/lib/contact";
 import { parseServices } from "@/lib/services";
-import { SERVICE_ICON } from "@/components/portal/serviceIcons";
+import { usePages } from "@/components/store/SitePages";
 import type { R } from "@/lib/store-types";
 
 /** رأس بوابة العميل: الاسم ورقم التسجيل الضريبي والبيانات المسجلة (قراءة فقط) */
@@ -25,7 +25,8 @@ export default function ClientHeader({ me, full = false }: { me: R; full?: boole
         ] as [string, string][])
       : []),
   ];
-  const services = parseServices(me.services);
+  const pages = usePages();
+  const services = parseServices(me.services).filter((k) => pages.active.some((p) => p.id === k));
   return (
     <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-navy-900 to-navy-700 text-white shadow-lg">
       <div className="flex flex-wrap items-center gap-4 p-5 sm:p-6">
@@ -36,7 +37,7 @@ export default function ClientHeader({ me, full = false }: { me: R; full?: boole
           <p className="text-xs text-white/60">{t.dash.welcome}</p>
           <h1 className="truncate text-xl font-bold sm:text-2xl">{me.full_name}</h1>
         </div>
-        <a href={officeWhatsApp(t.footer.phone)} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2 text-sm">
+        <a href={officeWhatsApp(t.contact.whatsapp)} target="_blank" rel="noopener noreferrer" className="btn-gold px-4 py-2 text-sm">
           <Icon name="phone" className="h-4 w-4" /> {t.arch.contactOffice}
         </a>
       </div>
@@ -52,7 +53,7 @@ export default function ClientHeader({ me, full = false }: { me: R; full?: boole
         <div className="flex flex-wrap gap-2 border-t border-white/10 px-5 py-3">
           {services.map((k) => (
             <Link key={k} href={`/dashboard/services/${k}`} className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs hover:bg-gold-500/25">
-              <Icon name={SERVICE_ICON[k]} className="h-3.5 w-3.5 text-gold-300" /> {t.arch.svc[k]}
+              <Icon name={pages.icon(k)} className="h-3.5 w-3.5 text-gold-300" /> {pages.label(k)}
             </Link>
           ))}
         </div>

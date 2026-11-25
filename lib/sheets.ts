@@ -1,7 +1,7 @@
 import "server-only";
 
 export type Row = Record<string, string>;
-export type Table = "Users" | "Requests" | "Files" | "StatusHistory" | "Notes" | "Credentials" | "ServiceRecords" | "Tasks" | "Finance" | "Documents" | "MonthlyInvoices" | "BillingLedger" | "ArchiveYears" | "ArchiveDocs";
+export type Table = "Users" | "Requests" | "Files" | "StatusHistory" | "Notes" | "Credentials" | "ServiceRecords" | "Tasks" | "Finance" | "Documents" | "MonthlyInvoices" | "BillingLedger" | "ArchiveYears" | "ArchiveDocs" | "site_pages" | "site_settings";
 export type Op =
   | { op: "select"; table: Table; where?: Record<string, string | string[]> }
   | { op: "insert"; table: Table; row: Row }

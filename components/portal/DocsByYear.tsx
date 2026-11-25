@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useI18n } from "@/components/store/I18n";
+import { usePages } from "@/components/store/SitePages";
 import { Icon } from "@/components/Icons";
 import { openDriveFile } from "./openFile";
 import { fmtDate } from "@/lib/format";
@@ -9,6 +10,7 @@ import type { R } from "@/lib/store-types";
 /** عرض مستندات (للعميل: قراءة وتحميل فقط) مجمعة بالسنوات */
 export default function DocsByYear({ docs, url, ticket, showSection = false }: { docs: R[]; url: string; ticket: (id: string) => string; showSection?: boolean }) {
   const { t, locale } = useI18n();
+  const pages = usePages();
   const years = [...new Set(docs.map((d) => d.year))].sort().reverse();
   const [open, setOpen] = useState<string | null>(years[0] ?? null);
   if (!docs.length) return <p className="p-10 text-center text-sm text-slate-500">{t.arch.noDocsClient}</p>;
@@ -32,7 +34,7 @@ export default function DocsByYear({ docs, url, ticket, showSection = false }: {
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium text-slate-800">{d.title}</div>
                       <div className="text-xs text-slate-400">
-                        {showSection && <span className="me-2 rounded bg-page px-1.5 py-0.5 text-slate-500">{t.arch.svc[(d.section || "general") as keyof typeof t.arch.svc]}</span>}
+                        {showSection && <span className="me-2 rounded bg-page px-1.5 py-0.5 text-slate-500">{pages.label(d.section)}</span>}
                         {fmtDate(d.created_at, locale)}
                       </div>
                     </div>
