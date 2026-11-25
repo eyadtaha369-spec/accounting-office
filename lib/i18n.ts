@@ -344,6 +344,16 @@ const ar = {
     clientDocs: "مستندات العميل",
     clientTasks: "مهام العميل",
   },
+  pwa: {
+    install: "تثبيت التطبيق على الهاتف",
+    iosTitle: "تثبيت التطبيق على الآيفون",
+    iosSafari: "افتح الموقع من متصفح Safari",
+    iosStep1: "اضغط زر المشاركة في أسفل الشاشة",
+    iosStep2: "اختر",
+    addToHome: "إضافة إلى الشاشة الرئيسية",
+    iosStep3: "اضغط «إضافة» — ستظهر أيقونة المكتب على شاشتك",
+    gotIt: "تمام",
+  },
   site: {
     nav: "إعدادات الموقع والصفحات",
     title: "إعدادات الموقع والصفحات",
@@ -938,6 +948,16 @@ const en: Dict = {
     clientRecords: "Client service records",
     clientDocs: "Client documents",
     clientTasks: "Client tasks",
+  },
+  pwa: {
+    install: "Install the app on your phone",
+    iosTitle: "Install on iPhone",
+    iosSafari: "Open the site in Safari",
+    iosStep1: "Tap the Share button at the bottom",
+    iosStep2: "Choose",
+    addToHome: "Add to Home Screen",
+    iosStep3: "Tap “Add” — the office icon appears on your home screen",
+    gotIt: "Got it",
   },
   site: {
     nav: "Site & Pages Settings",

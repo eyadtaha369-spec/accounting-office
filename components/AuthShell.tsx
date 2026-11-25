@@ -1,4 +1,5 @@
 import Logo from "./Logo";
+import InstallApp from "./pwa/InstallApp";
 import LangToggle from "./LangToggle";
 import { Icon, icons } from "./Icons";
 import type { Dict } from "@/lib/i18n";
@@ -51,6 +52,7 @@ export default function AuthShell({ t, locale, children, wide = false }: { t: Di
       <main className="flex items-start justify-center px-4 py-8 sm:py-12 lg:items-center">
         <div className={`w-full ${wide ? "max-w-3xl" : "max-w-md"}`}>
           {children}
+          <div className="mt-6 flex justify-center"><InstallApp t={t} /></div>
           {/* شارات الثقة على الموبايل */}
           <ul className="mt-6 grid grid-cols-2 gap-2 lg:hidden">
             {trust.map((x) => (

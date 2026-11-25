@@ -4,6 +4,7 @@ import { useState } from "react";
 import Logo from "./Logo";
 import LangToggle from "./LangToggle";
 import type { Dict } from "@/lib/i18n";
+import InstallApp from "@/components/pwa/InstallApp";
 
 export default function PublicNav({
   t,
@@ -34,6 +35,7 @@ export default function PublicNav({
           ))}
         </div>
         <div className="hidden items-center gap-2 lg:flex">
+          <InstallApp t={t} variant="dark" />
           <LangToggle locale={locale} label={t.nav.switchLang} dark />
           {accountHref ? (
             <Link href={accountHref} className="btn-gold">{t.nav.dashboard}</Link>
@@ -61,6 +63,7 @@ export default function PublicNav({
                 {l.label}
               </a>
             ))}
+            <div className="mt-2 [&>button]:w-full [&>button]:justify-center"><InstallApp t={t} variant="dark" /></div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {accountHref ? (
                 <Link href={accountHref} className="btn-gold col-span-2">{t.nav.dashboard}</Link>

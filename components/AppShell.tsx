@@ -6,6 +6,7 @@ import Logo from "./Logo";
 import LangToggle from "./LangToggle";
 import { Icon, icons } from "./Icons";
 import { signOut } from "@/app/actions";
+import InstallApp from "@/components/pwa/InstallApp";
 import type { Dict } from "@/lib/i18n";
 
 export type NavItem = { href: string; label: string; icon: keyof typeof icons; exact?: boolean };
@@ -56,6 +57,7 @@ export default function AppShell({
           ))}
         </nav>
         <div className="border-t border-white/10 p-4">
+          <div className="mb-3"><InstallApp t={t} variant="sidebar" /></div>
           <div className="text-sm font-semibold">{userName}</div>
           <div className="text-xs text-gold-300">{roleLabel}</div>
           <div className="mt-3 flex items-center justify-between">
@@ -114,6 +116,7 @@ export default function AppShell({
                 </Link>
               ))}
             </nav>
+            <div className="border-t border-white/10 p-3"><InstallApp t={t} variant="sidebar" /></div>
           </div>
         </div>
       )}

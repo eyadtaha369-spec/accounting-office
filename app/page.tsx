@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icons";
 import { getDict } from "@/lib/locale";
 import { getSession } from "@/lib/auth";
 import Calculators from "@/components/Calculators";
+import InstallApp from "@/components/pwa/InstallApp";
 import { activePages } from "@/lib/site-server";
 import { pageDesc, pageIcon, pageTitle } from "@/lib/site";
 import { officeWhatsApp } from "@/lib/contact";
@@ -167,6 +168,7 @@ export default async function Home() {
           <div>
             <Logo name={t.brandShort} tag={t.brandTag} light />
             <p className="mt-4 whitespace-pre-line text-sm leading-7">{t.footer.about}</p>
+            <div className="mt-5"><InstallApp t={t} variant="dark" /></div>
           </div>
           <div>
             <h4 className="font-semibold text-white">{t.footer.contact}</h4>
