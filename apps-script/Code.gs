@@ -73,6 +73,7 @@ function doPost(e) {
     if (body.action === 'directDownload') return out({ data: directDownload(body) });
     if (!body.secret || body.secret !== prop('API_SECRET')) return out({ error: 'unauthorized' });
     if (body.action === 'batch') return out({ data: runBatch(body.ops || []) });
+    if (body.action === 'snapshot') return out({ data: snapshot(body.tables || [], body.known) });
     return out({ error: 'unknown_action' });
   } catch (err) {
     return out({ error: String((err && err.message) || err) });
@@ -90,7 +91,11 @@ function runBatch(ops) {
   if (hasWrite) lock.waitLock(20000);
   try {
     const cache = {};
-    return ops.map(function (o) {
+    if (!hasWrite) {
+      // قراءة فقط: استخدم النسخة المخزنة مؤقتاً لكل ورقة (أسرع بكثير)
+      ops.forEach(function (o) { if (TABLES[o.table] && !cache[o.table]) cache[o.table] = readAllCached(o.table); });
+    }
+    const results = ops.map(function (o) {
       if (!TABLES[o.table]) throw new Error('unknown table ' + o.table);
       switch (o.op) {
         case 'select': return select(cache, o.table, o.where || {});
@@ -101,6 +106,8 @@ function runBatch(ops) {
         default: throw new Error('unknown op ' + o.op);
       }
     });
+    if (hasWrite) bumpVersion();
+    return results;
   } finally {
     if (hasWrite) lock.releaseLock();
   }
@@ -217,6 +224,62 @@ function nextCounter(key, start) {
   const next = Number(sheet('Meta').getRange(idx, 2).getDisplayValue()) + 1;
   writeRow('Meta', idx, { id: key, value: String(next) });
   return String(next);
+}
+
+// ======================= اللقطة الكاملة + التخزين المؤقت =======================
+/** رقم إصدار البيانات — يتغير مع كل عملية كتابة */
+function currentVersion() {
+  return prop('DATA_VERSION') || '0';
+}
+
+function bumpVersion() {
+  PropertiesService.getScriptProperties().setProperty('DATA_VERSION', String(Date.now()));
+}
+
+/**
+ * يرجع كل الجداول المطلوبة في طلب واحد.
+ * إذا أرسل الموقع رقم الإصدار المعروف لديه ولم تتغير البيانات، يرجع {unchanged:true} فوراً بدون قراءة الشيت.
+ */
+function snapshot(tables, known) {
+  const v = currentVersion();
+  if (known && String(known) === v) return { unchanged: true, version: v };
+  const data = {};
+  tables.forEach(function (t) {
+    if (TABLES[t]) data[t] = readAllCached(t);
+  });
+  return { version: v, tables: data };
+}
+
+/** قراءة ورقة مع تخزينها في CacheService (مقسمة لأجزاء لأن الحد 100KB لكل مفتاح) */
+function readAllCached(table) {
+  const v = currentVersion();
+  const cache = CacheService.getScriptCache();
+  const base = 'tbl:' + table + ':' + v;
+  try {
+    const meta = cache.get(base);
+    if (meta) {
+      const n = Number(meta);
+      const keys = [];
+      for (let i = 0; i < n; i++) keys.push(base + ':' + i);
+      const parts = cache.getAll(keys);
+      if (keys.every(function (k) { return parts[k] != null; })) {
+        return JSON.parse(keys.map(function (k) { return parts[k]; }).join(''));
+      }
+    }
+  } catch (e) { /* تجاهل وأعد القراءة من الشيت */ }
+  const rows = readAll({}, table);
+  try {
+    const json = JSON.stringify(rows);
+    const size = 90000;
+    const chunks = {};
+    let n = 0;
+    for (let i = 0; i < json.length; i += size) chunks[base + ':' + n++] = json.slice(i, i + size);
+    if (n <= 50) {
+      cache.putAll(chunks, 21600);
+      cache.put(base, String(n), 21600);
+    }
+  } catch (e) { /* الكاش اختياري */ }
+  return rows;
 }
 
 // ======================= الملفات (تذاكر موقّعة) =======================

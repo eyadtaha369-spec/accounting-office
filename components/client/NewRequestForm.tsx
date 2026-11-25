@@ -4,43 +4,58 @@ import { useRouter } from "next/navigation";
 import { REQUEST_TYPES, TAX_RETURN_TYPES, type Dict } from "@/lib/i18n";
 import { checkFiles } from "@/lib/format";
 import { uploadDirect } from "@/lib/direct";
-import { createRequest } from "../actions";
+import { createRequest } from "@/app/dashboard/actions";
 import { registerUploads } from "@/app/file-actions";
 import { Icon } from "@/components/Icons";
+import { useClient } from "@/components/store/stores";
+import { useMe } from "@/components/store/I18n";
+import { nowIso, replaceById, tmpId } from "@/lib/view";
 
 export default function NewRequestForm({ t, initialType }: { t: Dict; initialType: string }) {
+  const s = useClient();
+  const me = useMe();
   const router = useRouter();
   const [type, setType] = useState(initialType);
   const [sub, setSub] = useState<string>("vat");
   const [desc, setDesc] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     if (type === "other" && !desc.trim()) return setError(t.dash.otherDescRequired);
     if (!checkFiles(files)) return setError(t.dash.fileTypeDocs);
-    setLoading(true);
-    try {
-      const res = await createRequest(type, type === "tax_return" ? sub : null, desc);
-      if ("error" in res) {
-        setError(res.error === "desc" ? t.dash.otherDescRequired : t.auth.errors.generic);
-        setLoading(false);
-        return;
-      }
-      if (files.length) {
-        const uploaded = await Promise.all(files.map((f) => uploadDirect(res.upload, f)));
-        await registerUploads(res.upload.ticket, uploaded);
-      }
-    } catch {
-      setError(t.auth.errors.generic);
-      setLoading(false);
-      return;
-    }
-    router.push("/dashboard?submitted=1");
-    router.refresh();
+    // الطلب يظهر في "طلباتي" فوراً، والحفظ ورفع المرفقات يكمل في الخلفية
+    const rid = tmpId();
+    const hid = tmpId();
+    const now = nowIso();
+    const sub2 = type === "tax_return" ? sub : null;
+    const pending = files;
+    void s
+      .mutate({
+        apply: (d) => ({
+          ...d,
+          Requests: [{ id: rid, reference_no: "", client_id: me.uid, request_type: type, sub_type: sub2 ?? "", description: desc.trim(), status: "pending_review", admin_message: "", created_at: now }, ...d.Requests],
+          StatusHistory: [...d.StatusHistory, { id: hid, request_id: rid, old_status: "", new_status: "pending_review", message: "", created_at: now }],
+        }),
+        run: () => createRequest(type, sub2, desc),
+        commit: (d, r) => ("error" in r ? d : { ...d, Requests: replaceById(d.Requests, rid, r.request), StatusHistory: replaceById(d.StatusHistory, hid, r.history) }),
+        error: t.sync.saveFailed,
+        success: t.dash.submitted,
+      })
+      .then(async (r) => {
+        if (!r || "error" in r || !pending.length) return;
+        try {
+          const up = await Promise.all(pending.map((f) => uploadDirect(r.upload, f)));
+          const reg = await registerUploads(r.upload.ticket, up);
+          s.addTickets(reg.tickets);
+          void s.mutate({ apply: (d) => ({ ...d, Files: [...d.Files, ...reg.rows] }), run: async () => ({ ok: true }) });
+        } catch {
+          s.toast(t.auth.errors.generic);
+        }
+      });
+    router.push("/dashboard");
   }
 
   return (
@@ -118,8 +133,8 @@ export default function NewRequestForm({ t, initialType }: { t: Dict; initialTyp
       </div>
 
       {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      <button type="submit" disabled={loading} className="btn-navy w-full py-3 text-base">
-        {loading ? t.auth.submitting : t.dash.submit}
+      <button type="submit" className="btn-navy w-full py-3 text-base">
+        {t.dash.submit}
       </button>
     </form>
   );

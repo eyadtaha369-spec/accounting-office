@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { RECORD_SERVICES, RECORD_STATUSES, RECORD_STATUS_STYLES, type Dict, type Locale } from "@/lib/i18n";
 import { fmtDate } from "@/lib/format";
 import { saveRecord, deleteRecord } from "@/app/admin/ops-actions";
 import DeleteButton from "./DeleteButton";
 import { Empty, Pill } from "./Panel";
 import { Icon } from "../Icons";
+import { useAdmin } from "../store/stores";
+import { isTmp, nowIso, patchById, removeById, replaceById, tmpId } from "@/lib/view";
 
 export type RecordView = { id: string; client_id: string; clientName: string; service: string; period: string; due_date: string; status: string; amount: string; reference: string; notes: string };
 type Opt = { id: string; name: string };
@@ -18,23 +19,33 @@ export default function RecordsPanel({ t, locale, rows, clients, service = "", l
   t: Dict; locale: Locale; rows: RecordView[]; clients: Opt[]; service?: string; lockedClientId?: string;
 }) {
   const o = t.ops;
-  const router = useRouter();
+  const s = useAdmin();
   const [form, setForm] = useState<ReturnType<typeof blank> | null>(null);
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
   const today = new Date().toISOString().slice(0, 10);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
-    setBusy(true);
+    if (!form.client_id) return setErr(true);
     setErr(false);
-    const r = await saveRecord(form);
-    setBusy(false);
-    if (!r.ok) return setErr(true);
+    const f = form;
+    const id = f.id || tmpId();
+    const row = { ...f, id, created_at: nowIso() };
     setForm(null);
-    router.refresh();
+    void s.mutate({
+      apply: (d) => ({ ...d, ServiceRecords: f.id ? patchById(d.ServiceRecords, f.id, f) : [row, ...d.ServiceRecords] }),
+      run: () => saveRecord(f),
+      commit: (d, res) => (res.ok ? { ...d, ServiceRecords: replaceById(d.ServiceRecords, id, res.row) } : d),
+      error: t.sync.saveFailed,
+    });
   }
+  const remove = (id: string) =>
+    void s.mutate({
+      apply: (d) => ({ ...d, ServiceRecords: removeById(d.ServiceRecords, id) }),
+      run: () => (isTmp(id) ? Promise.resolve({ ok: true }) : deleteRecord(id)),
+      error: t.sync.saveFailed,
+    });
   const set = (k: string, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   return (
@@ -92,7 +103,7 @@ export default function RecordsPanel({ t, locale, rows, clients, service = "", l
           </div>
           {err && <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-3">{t.auth.errors.generic}</p>}
           <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
-            <button disabled={busy} className="btn-navy">{busy ? t.common.loading : o.save}</button>
+            <button className="btn-navy">{o.save}</button>
             <button type="button" onClick={() => setForm(null)} className="btn-outline">{o.cancel}</button>
           </div>
         </form>
@@ -137,7 +148,7 @@ export default function RecordsPanel({ t, locale, rows, clients, service = "", l
                         <button onClick={() => setForm({ ...r })} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-navy-700" title={o.edit}>
                           <Icon name="edit" className="h-4 w-4" />
                         </button>
-                        <DeleteButton onDelete={() => deleteRecord(r.id)} label={o.delete} confirm={o.confirmDelete} />
+                        <DeleteButton onDelete={() => remove(r.id)} label={o.delete} confirm={o.confirmDelete} />
                       </div>
                     </td>
                   </tr>

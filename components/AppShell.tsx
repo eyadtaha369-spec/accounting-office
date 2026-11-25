@@ -16,6 +16,7 @@ export default function AppShell({
   items,
   userName,
   roleLabel,
+  toolbar,
   children,
 }: {
   t: Dict;
@@ -23,6 +24,7 @@ export default function AppShell({
   items: NavItem[];
   userName: string;
   roleLabel: string;
+  toolbar?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const path = usePathname();
@@ -43,6 +45,7 @@ export default function AppShell({
             <Link
               key={it.href}
               href={it.href}
+              prefetch
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                 isActive(it) ? "bg-gold-500 text-navy-950" : "text-white/75 hover:bg-white/10 hover:text-white"
               }`}
@@ -57,7 +60,7 @@ export default function AppShell({
           <div className="text-xs text-gold-300">{roleLabel}</div>
           <div className="mt-3 flex items-center justify-between">
             <LangToggle locale={locale} label={t.nav.switchLang} dark />
-            <form action={signOut}>
+            <form action={signOut} onSubmit={() => { try { sessionStorage.clear(); } catch {} }}>
               <button className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm text-white/75 hover:bg-white/10 hover:text-white">
                 <Icon name="logout" className="h-4 w-4" />
                 {t.nav.logout}
@@ -79,7 +82,7 @@ export default function AppShell({
         </div>
         <div className="flex items-center">
           <LangToggle locale={locale} label={locale === "ar" ? "EN" : "ع"} dark />
-          <form action={signOut}>
+          <form action={signOut} onSubmit={() => { try { sessionStorage.clear(); } catch {} }}>
             <button className="rounded-lg p-2 text-white/80 hover:bg-white/10" aria-label={t.nav.logout}>
               <Icon name="logout" className="h-5 w-5" />
             </button>
@@ -88,7 +91,10 @@ export default function AppShell({
       </div>
 
       <main className={`min-w-0 flex-1 lg:pb-0 ${useDrawer ? "pb-6" : "pb-24"}`}>
-        <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">{children}</div>
+        <div className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+          {toolbar && <div className="mb-4">{toolbar}</div>}
+          {children}
+        </div>
       </main>
 
       {/* Drawer (mobile, many sections) */}
@@ -102,7 +108,7 @@ export default function AppShell({
             </div>
             <nav className="flex-1 space-y-1 overflow-y-auto p-3">
               {items.map((it) => (
-                <Link key={it.href} href={it.href} className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${isActive(it) ? "bg-gold-500 text-navy-950" : "text-white/80 hover:bg-white/10"}`}>
+                <Link key={it.href} href={it.href} prefetch className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium ${isActive(it) ? "bg-gold-500 text-navy-950" : "text-white/80 hover:bg-white/10"}`}>
                   <Icon name={it.icon} className="h-5 w-5" />
                   {it.label}
                 </Link>
@@ -118,6 +124,7 @@ export default function AppShell({
           <Link
             key={it.href}
             href={it.href}
+            prefetch
             className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium ${isActive(it) ? "text-navy-900" : "text-slate-400"}`}
           >
             <Icon name={it.icon} className={`h-5 w-5 ${isActive(it) ? "text-gold-600" : ""}`} />

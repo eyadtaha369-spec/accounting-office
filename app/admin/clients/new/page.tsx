@@ -1,11 +1,10 @@
+"use client";
 import Link from "next/link";
-import NewClientForm from "./NewClientForm";
-import { requireStaff } from "@/lib/auth";
-import { getDict } from "@/lib/locale";
+import NewClientForm from "@/components/admin/NewClientForm";
+import { useI18n } from "@/components/store/I18n";
 
-export default async function NewClientPage() {
-  await requireStaff();
-  const { t } = await getDict();
+export default function NewClientPage() {
+  const { t } = useI18n();
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Link href="/admin/clients" className="text-sm text-slate-500 hover:text-navy-700">← {t.admin.clients}</Link>

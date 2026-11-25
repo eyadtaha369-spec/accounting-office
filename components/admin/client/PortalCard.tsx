@@ -1,8 +1,9 @@
 "use client";
 import { useState, useTransition } from "react";
-import { revealCredentials, saveCredentials } from "../../actions";
+import { revealCredentials, saveCredentials } from "@/app/admin/actions";
 import { Icon } from "@/components/Icons";
 import type { Dict } from "@/lib/i18n";
+import { useAdmin } from "@/components/store/stores";
 
 export default function PortalCard({ t, clientId, portal, title, url, saved, canManage }: {
   t: Dict;
@@ -18,6 +19,7 @@ export default function PortalCard({ t, clientId, portal, title, url, saved, can
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const s = useAdmin();
 
   function reveal() {
     if (creds) return setCreds(null);
@@ -33,12 +35,19 @@ export default function PortalCard({ t, clientId, portal, title, url, saved, can
   function onSave(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    start(async () => {
-      const res = await saveCredentials(clientId, portal, String(fd.get("username") ?? ""), String(fd.get("password") ?? ""));
-      if (res.ok) {
-        setEditing(false);
-        setCreds(null);
-      }
+    const u = String(fd.get("username") ?? "");
+    const p = String(fd.get("password") ?? "");
+    setEditing(false);
+    setCreds(u || p ? { username: u, password: p } : null);
+    void s.mutate({
+      apply: (d) => ({
+        ...d,
+        Portals: u || p
+          ? [...d.Portals.filter((x) => !(x.client_id === clientId && x.portal === portal)), { client_id: clientId, portal }]
+          : d.Portals.filter((x) => !(x.client_id === clientId && x.portal === portal)),
+      }),
+      run: () => saveCredentials(clientId, portal, u, p),
+      error: t.sync.saveFailed,
     });
   }
 

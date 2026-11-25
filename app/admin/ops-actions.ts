@@ -1,8 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { requireAdmin, requireStaff } from "@/lib/auth";
 import { batch, insert, remove, select, update, type Row } from "@/lib/sheets";
-import { readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
+import { downloadTicket, readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
 import { normalizeDigits, re } from "@/lib/validation";
 import {
   CLIENT_TYPES, DOC_CATEGORIES, FILE_STATUSES, FIN_CATEGORIES, FIN_METHODS, RECORD_SERVICES, RECORD_STATUSES, TASK_PRIORITIES,
@@ -18,14 +17,11 @@ const money = (v: unknown) => {
   return Number.isFinite(n) && n >= 0 ? String(Math.round(n * 100) / 100) : "";
 };
 
-function refresh(...paths: string[]) {
-  for (const p of ["/admin", ...paths]) revalidatePath(p);
-}
 
 // ---------------- سجلات الخدمات ----------------
 export async function saveRecord(input: Row) {
   const s = await requireStaff();
-  if (!input.client_id) return { ok: false };
+  if (!input.client_id) return { ok: false as const };
   const row: Row = {
     client_id: str(input.client_id, 60),
     service: oneOf(RECORD_SERVICES, input.service, "vat"),
@@ -36,16 +32,13 @@ export async function saveRecord(input: Row) {
     reference: str(input.reference, 100),
     notes: str(input.notes, 2000),
   };
-  if (input.id) await update("ServiceRecords", input.id, row);
-  else await insert("ServiceRecords", { ...row, created_by: s.uid });
-  refresh("/admin/records", `/admin/clients/${row.client_id}`);
-  return { ok: true };
+  const saved = input.id ? await update("ServiceRecords", input.id, row) : await insert("ServiceRecords", { ...row, created_by: s.uid });
+  return { ok: true as const, row: saved };
 }
 
 export async function deleteRecord(id: string) {
   await requireStaff();
   await remove("ServiceRecords", id);
-  refresh("/admin/records");
   return { ok: true };
 }
 
@@ -53,7 +46,7 @@ export async function deleteRecord(id: string) {
 export async function saveTask(input: Row) {
   const s = await requireStaff();
   const title = str(input.title, 200);
-  if (!title) return { ok: false };
+  if (!title) return { ok: false as const };
   const row: Row = {
     title,
     client_id: str(input.client_id, 60),
@@ -62,23 +55,19 @@ export async function saveTask(input: Row) {
     assigned_to: str(input.assigned_to, 100),
     notes: str(input.notes, 2000),
   };
-  if (input.id) await update("Tasks", input.id, row);
-  else await insert("Tasks", { ...row, status: "open", created_by: s.uid });
-  refresh("/admin/tasks", row.client_id ? `/admin/clients/${row.client_id}` : "/admin/tasks");
-  return { ok: true };
+  const saved = input.id ? await update("Tasks", input.id, row) : await insert("Tasks", { ...row, status: "open", created_by: s.uid });
+  return { ok: true as const, row: saved };
 }
 
 export async function setTaskStatus(id: string, done: boolean) {
   await requireStaff();
   await update("Tasks", id, { status: done ? "done" : "open" });
-  refresh("/admin/tasks");
   return { ok: true };
 }
 
 export async function deleteTask(id: string) {
   await requireStaff();
   await remove("Tasks", id);
-  refresh("/admin/tasks");
   return { ok: true };
 }
 
@@ -86,7 +75,7 @@ export async function deleteTask(id: string) {
 export async function saveFinance(input: Row) {
   const s = await requireAdmin();
   const amount = money(input.amount);
-  if (!amount || Number(amount) <= 0 || !isDate(input.date)) return { ok: false };
+  if (!amount || Number(amount) <= 0 || !isDate(input.date)) return { ok: false as const };
   const row: Row = {
     type: input.type === "expense" ? "expense" : "income",
     category: oneOf(FIN_CATEGORIES, input.category, "other"),
@@ -96,16 +85,13 @@ export async function saveFinance(input: Row) {
     description: str(input.description, 500),
     method: oneOf(FIN_METHODS, input.method, "cash"),
   };
-  if (input.id) await update("Finance", input.id, row);
-  else await insert("Finance", { ...row, created_by: s.uid });
-  refresh("/admin/finance");
-  return { ok: true };
+  const saved = input.id ? await update("Finance", input.id, row) : await insert("Finance", { ...row, created_by: s.uid });
+  return { ok: true as const, row: saved };
 }
 
 export async function deleteFinance(id: string) {
   await requireAdmin();
   await remove("Finance", id);
-  refresh("/admin/finance");
   return { ok: true };
 }
 
@@ -118,9 +104,9 @@ export async function getDocTicket(clientId: string) {
 export async function registerDocument(ticket: string, up: Uploaded, meta: { title: string; category: string; visible: boolean }) {
   const s = await requireStaff();
   const t = readTicket<UploadTicket>(ticket);
-  if (!t || t.folder !== "docs" || t.uid !== s.uid || !t.clientId || !verifyReceipt(ticket, up.fileId, up.receipt)) return { ok: false };
-  if (!ALLOWED_DOC_TYPES.includes(up.mimeType) || up.size > MAX_DOC_BYTES) return { ok: false };
-  await insert("Documents", {
+  if (!t || t.folder !== "docs" || t.uid !== s.uid || !t.clientId || !verifyReceipt(ticket, up.fileId, up.receipt)) return { ok: false as const };
+  if (!ALLOWED_DOC_TYPES.includes(up.mimeType) || up.size > MAX_DOC_BYTES) return { ok: false as const };
+  const doc = await insert("Documents", {
     client_id: t.clientId,
     title: str(meta.title, 200) || up.name,
     category: oneOf(DOC_CATEGORIES, meta.category, "other"),
@@ -131,14 +117,12 @@ export async function registerDocument(ticket: string, up: Uploaded, meta: { tit
     visible_to_client: meta.visible ? "yes" : "no",
     uploaded_by: s.uid,
   });
-  refresh("/admin/documents", `/admin/clients/${t.clientId}`, "/dashboard/profile");
-  return { ok: true };
+  return { ok: true as const, doc, ticket: downloadTicket(up.fileId) };
 }
 
 export async function deleteDocument(id: string) {
   await requireStaff();
   await remove("Documents", id);
-  refresh("/admin/documents");
   return { ok: true };
 }
 
@@ -146,15 +130,15 @@ export async function deleteDocument(id: string) {
 export async function updateClientByStaff(clientId: string, input: Row) {
   await requireStaff();
   const [u] = await select("Users", { id: clientId });
-  if (!u || u.role !== "client") return { ok: false, error: "generic" };
+  if (!u || u.role !== "client") return { ok: false as const, error: "generic" };
   const phone = normalizeDigits(str(input.phone));
   const phone_alt = normalizeDigits(str(input.phone_alt));
   const tax = normalizeDigits(str(input.tax_registration_number));
   const name = str(input.full_name, 150);
-  if (!name) return { ok: false, error: "required" };
-  if (!re.phone.test(phone) || (phone_alt && !re.phone.test(phone_alt))) return { ok: false, error: "phone" };
-  if (tax && !re.tax.test(tax)) return { ok: false, error: "taxNumber" };
-  await batch([
+  if (!name) return { ok: false as const, error: "required" };
+  if (!re.phone.test(phone) || (phone_alt && !re.phone.test(phone_alt))) return { ok: false as const, error: "phone" };
+  if (tax && !re.tax.test(tax)) return { ok: false as const, error: "taxNumber" };
+  const [saved] = (await batch([
     {
       op: "update",
       table: "Users",
@@ -171,7 +155,8 @@ export async function updateClientByStaff(clientId: string, input: Row) {
         file_status: oneOf(FILE_STATUSES, input.file_status, "active"),
       },
     },
-  ]);
-  refresh(`/admin/clients/${clientId}`, "/admin/clients");
-  return { ok: true };
+  ])) as Row[];
+  const { password_hash, ...user } = saved;
+  void password_hash;
+  return { ok: true as const, user };
 }

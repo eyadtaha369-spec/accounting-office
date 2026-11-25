@@ -101,7 +101,8 @@ export async function setRequestStatus(req: Request, status: Status, message: st
       row: { request_id: req.id, old_status: req.status, new_status: status, message: message ?? "", changed_by: by },
     });
   }
-  await batch(ops);
+  const res = (await batch(ops)) as Row[];
+  return { request: res[0], history: (res[1] as Row | undefined) ?? null };
 }
 
 // ---------- الإدارة ----------

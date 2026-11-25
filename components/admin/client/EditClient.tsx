@@ -1,28 +1,33 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { CLIENT_TYPES, FILE_STATUSES, type Dict } from "@/lib/i18n";
-import { updateClientByStaff } from "../../ops-actions";
-import type { Profile } from "@/lib/db";
+import { updateClientByStaff } from "@/app/admin/ops-actions";
+import { useAdmin } from "@/components/store/stores";
+import { patchById, replaceById } from "@/lib/view";
+import { normalizeDigits, re } from "@/lib/validation";
+import type { R } from "@/lib/store-types";
 
-export default function EditClient({ t, client }: { t: Dict; client: Profile }) {
-  const router = useRouter();
+export default function EditClient({ t, client }: { t: Dict; client: R }) {
+  const s = useAdmin();
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
+  function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    setBusy(true);
-    setMsg(null);
-    const r = await updateClientByStaff(client.id, Object.fromEntries([...fd.entries()].map(([k, v]) => [k, String(v)])));
-    setBusy(false);
-    if (r.ok) {
-      setMsg({ ok: true, text: t.ops.saved });
-      setOpen(false);
-      router.refresh();
-    } else setMsg({ ok: false, text: (t.auth.errors as Record<string, string>)[r.error ?? ""] ?? t.auth.errors.generic });
+    const input = Object.fromEntries([...new FormData(e.currentTarget).entries()].map(([k, v]) => [k, String(v).trim()]));
+    for (const k of ["phone", "phone_alt", "tax_registration_number"]) input[k] = normalizeDigits(input[k] ?? "");
+    // تحقق فوري قبل التحديث
+    if (!input.full_name) return setMsg({ ok: false, text: t.auth.errors.required });
+    if (!re.phone.test(input.phone) || (input.phone_alt && !re.phone.test(input.phone_alt))) return setMsg({ ok: false, text: t.auth.errors.phone });
+    if (input.tax_registration_number && !re.tax.test(input.tax_registration_number)) return setMsg({ ok: false, text: t.auth.errors.taxNumber });
+    setMsg({ ok: true, text: t.ops.saved });
+    setOpen(false);
+    void s.mutate({
+      apply: (d) => ({ ...d, Users: patchById(d.Users, client.id, input) }),
+      run: () => updateClientByStaff(client.id, input),
+      commit: (d, r) => (r.ok ? { ...d, Users: replaceById(d.Users, client.id, r.user) } : d),
+      error: t.sync.saveFailed,
+    });
   }
 
   if (!open)
@@ -56,7 +61,7 @@ export default function EditClient({ t, client }: { t: Dict; client: Profile }) 
       </div>
       {msg && !msg.ok && <p className="text-sm text-red-600 sm:col-span-2">{msg.text}</p>}
       <div className="flex gap-2 sm:col-span-2">
-        <button disabled={busy} className="btn-navy">{busy ? t.common.loading : t.ops.save}</button>
+        <button className="btn-navy">{t.ops.save}</button>
         <button type="button" onClick={() => setOpen(false)} className="btn-outline">{t.ops.cancel}</button>
       </div>
     </form>

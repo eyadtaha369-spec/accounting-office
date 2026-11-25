@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { DOC_CATEGORIES, type Dict, type Locale } from "@/lib/i18n";
 import { checkFiles, fmtDate } from "@/lib/format";
 import { downloadDirect, uploadDirect } from "@/lib/direct";
@@ -9,6 +8,8 @@ import { deleteDocument, getDocTicket, registerDocument } from "@/app/admin/ops-
 import DeleteButton from "./DeleteButton";
 import { Empty, Pill } from "./Panel";
 import { Icon } from "../Icons";
+import { useAdmin } from "../store/stores";
+import { removeById } from "@/lib/view";
 
 export type DocView = { id: string; client_id: string; clientName: string; title: string; category: string; file_name: string; visible_to_client: string; created_at: string; ticket: string };
 type Opt = { id: string; name: string };
@@ -17,7 +18,7 @@ export default function DocsPanel({ t, locale, rows, clients, url, lockedClientI
   t: Dict; locale: Locale; rows: DocView[]; clients: Opt[]; url: string; lockedClientId?: string;
 }) {
   const o = t.ops;
-  const router = useRouter();
+  const s = useAdmin();
   const [open, setOpen] = useState(false);
   const [clientId, setClientId] = useState(lockedClientId);
   const [title, setTitle] = useState("");
@@ -39,10 +40,11 @@ export default function DocsPanel({ t, locale, rows, clients, url, lockedClientI
       const up = await uploadDirect(tk, file);
       const r = await registerDocument(tk.ticket, up, { title, category, visible });
       if (!r.ok) throw new Error();
+      s.addTickets({ [r.doc.drive_file_id]: r.ticket });
+      void s.mutate({ apply: (d) => ({ ...d, Documents: [r.doc, ...d.Documents] }), run: async () => ({ ok: true }) });
       setOpen(false);
       setTitle("");
       setFile(null);
-      router.refresh();
     } catch {
       setErr(t.auth.errors.generic);
     }
@@ -134,7 +136,7 @@ export default function DocsPanel({ t, locale, rows, clients, url, lockedClientI
               <button onClick={() => download(d)} disabled={dl === d.id} className="btn-outline px-3 py-1.5 text-xs">
                 {dl === d.id ? "…" : o.download}
               </button>
-              <DeleteButton onDelete={() => deleteDocument(d.id)} label={o.delete} confirm={o.confirmDelete} />
+              <DeleteButton onDelete={() => void s.mutate({ apply: (x) => ({ ...x, Documents: removeById(x.Documents, d.id) }), run: () => deleteDocument(d.id), error: t.sync.saveFailed })} label={o.delete} confirm={o.confirmDelete} />
             </li>
           ))}
         </ul>

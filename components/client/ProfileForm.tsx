@@ -1,16 +1,15 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { updateProfile } from "../actions";
+import { updateProfile } from "@/app/dashboard/actions";
+import { useClient } from "@/components/store/stores";
 import { CLIENT_TYPES, type Dict } from "@/lib/i18n";
 import { normalizeDigits, re } from "@/lib/validation";
-import type { Profile } from "@/lib/db";
+import type { R } from "@/lib/store-types";
 import { Icon } from "@/components/Icons";
 
-export default function ProfileForm({ t, profile }: { t: Dict; profile: Profile }) {
-  const router = useRouter();
+export default function ProfileForm({ t, profile }: { t: Dict; profile: R }) {
+  const s = useClient();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [loading, setLoading] = useState(false);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -22,25 +21,23 @@ export default function ProfileForm({ t, profile }: { t: Dict; profile: Profile 
     const tax = v("tax_registration_number");
     if (!re.phone.test(phone) || (phone_alt && !re.phone.test(phone_alt))) return setMsg({ ok: false, text: t.auth.errors.phone });
     if (tax && !re.tax.test(tax)) return setMsg({ ok: false, text: t.auth.errors.taxNumber });
-    setLoading(true);
-    let error = false;
-    try {
-      const res = await updateProfile({
-        phone,
-        phone_alt,
-        tax_registration_number: tax,
-        client_type: String(fd.get("client_type")),
-        company_name: String(fd.get("company_name") ?? ""),
-        tax_office: String(fd.get("tax_office") ?? ""),
-        address: String(fd.get("address") ?? ""),
-      });
-      error = "error" in res;
-    } catch {
-      error = true;
-    }
-    setLoading(false);
-    setMsg(error ? { ok: false, text: t.auth.errors.generic } : { ok: true, text: t.dash.saved });
-    if (!error) router.refresh();
+    const patch = {
+      phone,
+      phone_alt,
+      tax_registration_number: tax,
+      client_type: String(fd.get("client_type")),
+      company_name: String(fd.get("company_name") ?? "").trim(),
+      tax_office: String(fd.get("tax_office") ?? "").trim(),
+      address: String(fd.get("address") ?? "").trim(),
+    };
+    // حفظ فوري على الشاشة ثم في الشيت بالخلفية
+    setMsg({ ok: true, text: t.dash.saved });
+    void s.mutate({
+      apply: (d) => ({ ...d, Me: d.Me ? { ...d.Me, ...patch } : d.Me }),
+      run: () => updateProfile(patch),
+      commit: (d, r) => ("error" in r ? d : { ...d, Me: r.user }),
+      error: t.sync.saveFailed,
+    }).then((r) => { if (!r) setMsg(null); });
   }
 
   return (
@@ -74,7 +71,7 @@ export default function ProfileForm({ t, profile }: { t: Dict; profile: Profile 
         </div>
       </div>
       {msg && <p className={`rounded-lg p-3 text-sm ${msg.ok ? "bg-emerald-50 text-emerald-800" : "bg-red-50 text-red-700"}`}>{msg.text}</p>}
-      <button disabled={loading} className="btn-navy">{loading ? t.common.loading : t.dash.save}</button>
+      <button className="btn-navy">{t.dash.save}</button>
     </form>
   );
 }

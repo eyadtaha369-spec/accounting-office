@@ -48,5 +48,5 @@ export function uploadTicket(p: Omit<UploadTicket, "t" | "exp" | "n">) {
 }
 
 export function downloadTicket(fileId: string) {
-  return signTicket({ t: "down", fileId, exp: Date.now() + 60 * 60_000 });
+  return signTicket({ t: "down", fileId, exp: Date.now() + 12 * 60 * 60_000 });
 }

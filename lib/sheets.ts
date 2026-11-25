@@ -43,3 +43,24 @@ export async function update(table: Table, id: string, patch: Row) {
 export async function remove(table: Table, id: string) {
   return (await batch([{ op: "delete", table, id }]))[0] as { deleted: boolean };
 }
+
+/** لقطة كاملة لعدة جداول في طلب واحد — ترجع unchanged إذا لم تتغير البيانات منذ الإصدار المعروف */
+export async function snapshot(tables: string[], known?: string) {
+  const url = process.env.APPS_SCRIPT_URL;
+  const secret = process.env.APPS_SCRIPT_SECRET;
+  if (!url || !secret) throw new Error("APPS_SCRIPT_URL / APPS_SCRIPT_SECRET are not set");
+  const res = await fetch(url, {
+    method: "POST",
+    body: JSON.stringify({ secret, action: "snapshot", tables, known }),
+    cache: "no-store",
+    redirect: "follow",
+  });
+  const json = JSON.parse(await res.text()) as { data?: { unchanged?: boolean; version: string; tables?: Record<string, Row[]> }; error?: string };
+  if (json.error === "unknown_action") {
+    // نسخة Code.gs قديمة: نفس الطلب الواحد عبر batch (بدون كاش أو رقم إصدار)
+    const rows = (await batch(tables.map((table) => ({ op: "select" as const, table: table as Table })))) as Row[][];
+    return { unchanged: false, version: `legacy-${Date.now()}`, tables: Object.fromEntries(tables.map((t, i) => [t, rows[i] ?? []])) };
+  }
+  if (json.error || !json.data) throw new Error(`Apps Script: ${json.error ?? "no data"}`);
+  return json.data;
+}

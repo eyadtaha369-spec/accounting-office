@@ -1,9 +1,8 @@
 "use server";
-import { revalidatePath } from "next/cache";
 import { requireLogin } from "@/lib/auth";
 import { batch, select, type Op } from "@/lib/sheets";
 import { setRequestStatus, type Request } from "@/lib/db";
-import { readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
+import { downloadTicket, readTicket, uploadTicket, verifyReceipt, type UploadTicket } from "@/lib/tickets";
 import { ALLOWED_DOC_TYPES, MAX_DOC_BYTES } from "@/lib/format";
 import type { Uploaded } from "@/lib/direct";
 
@@ -51,18 +50,17 @@ export async function registerUploads(ticket: string, uploads: Uploaded[]) {
       },
     });
   }
-  if (ops.length) await batch(ops);
-  revalidatePath(`/dashboard/requests/${t.requestId}`);
-  revalidatePath(`/admin/requests/${t.requestId}`);
-  return { ok: true };
+  const rows = (ops.length ? await batch(ops) : []) as Record<string, string>[];
+  const tickets: Record<string, string> = {};
+  for (const r of rows) tickets[r.drive_file_id] = downloadTicket(r.drive_file_id);
+  return { ok: true as const, rows, tickets };
 }
 
 /** العميل يعيد إرسال الطلب بعد رفع المستندات المطلوبة */
 export async function resubmitRequest(requestId: string) {
   const s = await requireLogin();
   const [req] = (await select("Requests", { id: requestId })) as unknown as Request[];
-  if (!req || req.client_id !== s.uid || req.status !== "needs_documents") return { ok: false };
-  await setRequestStatus(req, "pending_review", req.admin_message, s.uid);
-  revalidatePath(`/dashboard/requests/${requestId}`);
-  return { ok: true };
+  if (!req || req.client_id !== s.uid || req.status !== "needs_documents") return { ok: false as const };
+  const res = await setRequestStatus(req, "pending_review", req.admin_message, s.uid);
+  return { ok: true as const, ...res };
 }

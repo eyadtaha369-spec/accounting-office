@@ -5,20 +5,23 @@ import { CLIENT_TYPES, type Dict } from "@/lib/i18n";
 import { ID_IMAGE_TYPES, MAX_ID_BYTES, normalizeDigits, re } from "@/lib/validation";
 import { strongPassword } from "@/lib/credentials-text";
 import { uploadDirect } from "@/lib/direct";
-import { adminCreateClient, getAdminIdTicket } from "../../actions";
+import { adminCreateClient, getAdminIdTicket } from "@/app/admin/actions";
 import type { ClientFields } from "@/lib/client-input";
 import CredentialsCard from "@/components/CredentialsCard";
+import { useAdmin } from "@/components/store/stores";
+import { nowIso, replaceById, tmpId } from "@/lib/view";
 
 type Errors = Partial<Record<string, string>>;
 const FIELDS = ["full_name", "phone", "phone_alt", "email", "password", "national_id", "tax_registration_number", "client_type", "company_name", "tax_office", "address"] as const;
 
 export default function NewClientForm({ t }: { t: Dict }) {
+  const s = useAdmin();
   const formRef = useRef<HTMLFormElement>(null);
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [created, setCreated] = useState<{ id: string; name: string; phone: string; email: string; password: string } | null>(null);
+  const [created, setCreated] = useState<{ id: string; saving: boolean; name: string; phone: string; email: string; password: string } | null>(null);
 
   function validate(fd: FormData): Errors {
     const e: Errors = {};
@@ -45,11 +48,20 @@ export default function NewClientForm({ t }: { t: Dict }) {
     const e = validate(fd);
     setErrors(e);
     if (Object.keys(e).length) return;
+    // فحص فوري للتكرار من البيانات المحفوظة في الذاكرة
+    const input = Object.fromEntries(FIELDS.map((k) => [k, String(fd.get(k) ?? "")])) as unknown as ClientFields;
+    const email = input.email.trim().toLowerCase();
+    const nid = normalizeDigits(input.national_id.trim());
+    const users = s.data?.Users ?? [];
+    if (users.some((u) => u.email === email)) return setErrors({ email: t.auth.errors.duplicateEmail });
+    if (users.some((u) => u.national_id === nid)) return setErrors({ national_id: t.auth.errors.duplicateId });
+
     setLoading(true);
+    let ids = null;
     try {
+      // صور البطاقة تحتاج رفعاً فعلياً أولاً
       const front = fd.get("id_front") as File | null;
       const back = fd.get("id_back") as File | null;
-      let ids = null;
       if ((front && front.size) || (back && back.size)) {
         const tk = await getAdminIdTicket();
         ids = {
@@ -58,20 +70,42 @@ export default function NewClientForm({ t }: { t: Dict }) {
           back: back && back.size ? await uploadDirect(tk, back) : undefined,
         };
       }
-      const input = Object.fromEntries(FIELDS.map((k) => [k, String(fd.get(k) ?? "")])) as unknown as ClientFields;
-      const res = await adminCreateClient(input, ids);
-      if (!("ok" in res)) {
-        const msg = (t.auth.errors as Record<string, string>)[res.error] ?? t.auth.errors.generic;
-        if (res.field) setErrors({ [res.field]: msg });
-        setFormError(msg);
-      } else {
-        setCreated({ id: res.id, name: input.full_name, phone: input.phone, email: input.email.trim().toLowerCase(), password });
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }
     } catch {
-      setFormError(t.auth.errors.generic);
+      setLoading(false);
+      return setFormError(t.auth.errors.generic);
     }
     setLoading(false);
+
+    // إظهار العميل فوراً + بيانات الدخول، والحفظ في الخلفية
+    const tid = tmpId();
+    const optimistic = {
+      id: tid, role: "client", file_status: "active", full_name: input.full_name.trim(), email, phone: normalizeDigits(input.phone),
+      phone_alt: normalizeDigits(input.phone_alt), national_id: nid, tax_registration_number: normalizeDigits(input.tax_registration_number),
+      client_type: input.client_type, company_name: input.company_name, tax_office: input.tax_office, address: input.address,
+      id_front_file: "", id_back_file: "", created_at: nowIso(),
+    };
+    setCreated({ id: tid, saving: true, name: optimistic.full_name, phone: optimistic.phone, email, password });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const res = await s.mutate({
+      apply: (d) => ({ ...d, Users: [optimistic, ...d.Users] }),
+      run: () => adminCreateClient(input, ids),
+      commit: (d, r) => {
+        if (!("ok" in r)) return d;
+        s.addTickets(r.tickets);
+        return { ...d, Users: replaceById(d.Users, tid, r.user), Notes: [r.note, ...d.Notes] };
+      },
+      error: t.sync.saveFailed,
+    });
+    if (res && "ok" in res) {
+      setCreated((c) => (c ? { ...c, id: res.id, saving: false } : c));
+    } else {
+      // فشل الحفظ: رجوع للنموذج مع توضيح السبب
+      setCreated(null);
+      const r = res as { error?: string; field?: string } | null;
+      const m = (r?.error && (t.auth.errors as Record<string, string>)[r.error]) || t.sync.saveFailed;
+      if (r?.field) setErrors({ [r.field]: m });
+      setFormError(m);
+    }
   }
 
   if (created) {
@@ -83,7 +117,11 @@ export default function NewClientForm({ t }: { t: Dict }) {
         </div>
         <CredentialsCard t={t} name={created.name} phone={created.phone} email={created.email} password={created.password} />
         <div className="flex flex-wrap gap-2">
-          <Link href={`/admin/clients/${created.id}`} className="btn-gold">{t.admin.openClientFile}</Link>
+          {created.saving ? (
+            <span className="btn-gold opacity-60">{t.sync.syncing}</span>
+          ) : (
+            <Link href={`/admin/clients/${created.id}`} className="btn-gold">{t.admin.openClientFile}</Link>
+          )}
           <button
             onClick={() => {
               setCreated(null);

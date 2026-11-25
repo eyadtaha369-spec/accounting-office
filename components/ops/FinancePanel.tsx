@@ -1,37 +1,49 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { FIN_CATEGORIES, FIN_METHODS, type Dict, type Locale } from "@/lib/i18n";
 import { fmtDate } from "@/lib/format";
 import { saveFinance, deleteFinance } from "@/app/admin/ops-actions";
 import DeleteButton from "./DeleteButton";
 import { Empty } from "./Panel";
 import { Icon } from "../Icons";
+import { useAdmin } from "../store/stores";
+import { isTmp, nowIso, patchById, removeById, replaceById, tmpId } from "@/lib/view";
 
 export type FinanceView = { id: string; type: string; category: string; amount: string; date: string; client_id: string; clientName: string; description: string; method: string };
 type Opt = { id: string; name: string };
 
 export default function FinancePanel({ t, locale, rows, clients }: { t: Dict; locale: Locale; rows: FinanceView[]; clients: Opt[] }) {
   const o = t.ops;
-  const router = useRouter();
+  const s = useAdmin();
   const blank = { id: "", type: "income", category: "fees", amount: "", date: new Date().toISOString().slice(0, 10), client_id: "", description: "", method: "cash" };
   const [form, setForm] = useState<typeof blank | null>(null);
-  const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(false);
   const set = (k: string, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form) return;
-    setBusy(true);
+    const amt = Number(String(form.amount).replace(/,/g, ""));
+    if (!(amt > 0) || !form.date) return setErr(true);
     setErr(false);
-    const r = await saveFinance(form);
-    setBusy(false);
-    if (!r.ok) return setErr(true);
+    const f = { ...form, amount: String(amt) };
+    const id = f.id || tmpId();
+    const row = { ...f, id, created_at: nowIso() };
     setForm(null);
-    router.refresh();
+    void s.mutate({
+      apply: (d) => ({ ...d, Finance: f.id ? patchById(d.Finance, f.id, f) : [row, ...d.Finance] }),
+      run: () => saveFinance(f),
+      commit: (d, res) => (res.ok ? { ...d, Finance: replaceById(d.Finance, id, res.row) } : d),
+      error: t.sync.saveFailed,
+    });
   }
+  const remove = (id: string) =>
+    void s.mutate({
+      apply: (d) => ({ ...d, Finance: removeById(d.Finance, id) }),
+      run: () => (isTmp(id) ? Promise.resolve({ ok: true }) : deleteFinance(id)),
+      error: t.sync.saveFailed,
+    });
 
   return (
     <div>
@@ -89,7 +101,7 @@ export default function FinancePanel({ t, locale, rows, clients }: { t: Dict; lo
           </div>
           {err && <p className="text-sm text-red-600 sm:col-span-2 lg:col-span-3">{t.auth.errors.generic}</p>}
           <div className="flex gap-2 sm:col-span-2 lg:col-span-3">
-            <button disabled={busy} className="btn-navy">{busy ? t.common.loading : o.save}</button>
+            <button className="btn-navy">{o.save}</button>
             <button type="button" onClick={() => setForm(null)} className="btn-outline">{o.cancel}</button>
           </div>
         </form>
@@ -126,7 +138,7 @@ export default function FinancePanel({ t, locale, rows, clients }: { t: Dict; lo
                       <button onClick={() => setForm({ ...r })} className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-navy-700" title={o.edit}>
                         <Icon name="edit" className="h-4 w-4" />
                       </button>
-                      <DeleteButton onDelete={() => deleteFinance(r.id)} label={o.delete} confirm={o.confirmDelete} />
+                      <DeleteButton onDelete={() => remove(r.id)} label={o.delete} confirm={o.confirmDelete} />
                     </div>
                   </td>
                 </tr>
